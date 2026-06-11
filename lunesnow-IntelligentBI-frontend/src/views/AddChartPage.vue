@@ -7,80 +7,69 @@
       </div>
     </div>
 
-    <div class="content-grid">
-      <el-card class="form-section" shadow="never">
-        <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-          <el-form-item label="图表名称" prop="name">
-            <el-input v-model="form.name" placeholder="请输入图表名称" />
-          </el-form-item>
+    <el-card class="form-section" shadow="never">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="图表名称" prop="name">
+          <el-input v-model="form.name" placeholder="请输入图表名称" />
+        </el-form-item>
 
-          <el-form-item label="图表类型" prop="chartType">
-            <el-select v-model="form.chartType" placeholder="请选择图表类型" style="width: 100%">
-              <el-option label="折线图" value="折线图" />
-              <el-option label="柱状图" value="柱状图" />
-              <el-option label="饼图" value="饼图" />
-              <el-option label="散点图" value="散点图" />
-              <el-option label="雷达图" value="雷达图" />
-            </el-select>
-          </el-form-item>
+        <el-form-item label="图表类型" prop="chartType">
+          <el-select v-model="form.chartType" placeholder="请选择图表类型" style="width: 100%">
+            <el-option label="折线图" value="折线图" />
+            <el-option label="柱状图" value="柱状图" />
+            <el-option label="饼图" value="饼图" />
+            <el-option label="散点图" value="散点图" />
+            <el-option label="雷达图" value="雷达图" />
+          </el-select>
+        </el-form-item>
 
-          <el-form-item label="分析目标" prop="goal">
-            <el-input
-              v-model="form.goal"
-              type="textarea"
-              :rows="3"
-              :maxlength="200"
-              placeholder="请输入分析目标，例如：分析2024年各季度销售额趋势"
-            />
-          </el-form-item>
+        <el-form-item label="分析目标" prop="goal">
+          <el-input
+            v-model="form.goal"
+            type="textarea"
+            :rows="3"
+            :maxlength="200"
+            placeholder="请输入分析目标，例如：分析2024年各季度销售额趋势"
+          />
+        </el-form-item>
 
-          <el-form-item label="数据文件" prop="file">
-            <el-upload
-              ref="uploadRef"
-              action="#"
-              :auto-upload="false"
-              :on-change="handleFileChange"
-              :on-remove="handleRemove"
-              :limit="1"
-              accept=".xlsx,.xls"
-            >
-              <el-button type="primary">选择 Excel 文件</el-button>
-              <template #tip>
-                <div class="el-upload__tip">请上传 Excel 文件（.xlsx / .xls）</div>
-              </template>
-            </el-upload>
-          </el-form-item>
+        <el-form-item label="数据文件" prop="file">
+          <el-upload
+            ref="uploadRef"
+            action="#"
+            :auto-upload="false"
+            :on-change="handleFileChange"
+            :on-remove="handleRemove"
+            :limit="1"
+            accept=".xlsx,.xls"
+          >
+            <el-button type="primary">选择 Excel 文件</el-button>
+            <template #tip>
+              <div class="el-upload__tip">请上传 Excel 文件（.xlsx / .xls）</div>
+            </template>
+          </el-upload>
+        </el-form-item>
 
-          <el-form-item>
-            <el-button type="primary" :loading="submitting" @click="handleSubmit">
-              生成图表
-            </el-button>
-            <el-button @click="handleReset">重置</el-button>
-          </el-form-item>
-        </el-form>
-      </el-card>
-
-      <el-card class="chart-section" shadow="never">
-        <div class="preview-title">图表预览:</div>
-        <div id="genChart"></div>
-      </el-card>
-    </div>
-
-    <el-card class="result-section" shadow="never">
-      <div id="genResult">分析结果: <br />{{ genResult }}</div>
+        <el-form-item>
+          <el-button type="primary" :loading="submitting" @click="handleSubmit">
+            生成图表
+          </el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </el-form-item>
+      </el-form>
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules, ElMessageBox } from 'element-plus'
 import type { UploadFile } from 'element-plus'
 import myAxios from '@/request'
-import * as echarts from 'echarts'
 
-// 生成结果
-const genResult = ref('')
+const router = useRouter()
+
 // 表单实例
 const formRef = ref<FormInstance>()
 // 上传组件实例
@@ -102,9 +91,9 @@ const rules: FormRules = {
   goal: [{ required: true, message: '请输入分析目标', trigger: 'blur' }],
 }
 
+// 处理文件上传
 const ALLOWED_TYPES = ['.xlsx', '.xls']
 const MAX_SIZE = 2 * 1024 * 1024
-// 处理文件选择
 const handleFileChange = (uploadFile: UploadFile) => {
   const file = uploadFile.raw
   if (!file) return
@@ -126,6 +115,7 @@ const handleFileChange = (uploadFile: UploadFile) => {
   // 保存选中的文件
   selectedFile.value = uploadFile.raw || null
 }
+
 // 处理文件删除
 const handleRemove = () => {
   ElMessageBox.confirm('确认删除选中的文件吗？', '提示', {
@@ -163,14 +153,11 @@ const handleSubmit = async () => {
         data: formDataFile,
       })
       if (res.code === 0) {
-        const chartOption = new Function('return ' + res.data.genChart)()
-        const myChart = echarts.init(document.getElementById('genChart'))
-        myChart.setOption(chartOption)
-        genResult.value = res.data.genResult || ''
-        ElMessage.success('图表生成成功！')
+        ElMessage.success('图表已提交，正在生成中，可以前往我的图表查看生成进度')
+        router.push('/my/charts')
       }
-    } catch (error: any) {
-      ElMessage.error(error.message || '生成失败')
+    } catch (error: unknown) {
+      ElMessage.error(error instanceof Error ? error.message : '生成失败')
     } finally {
       submitting.value = false
     }
@@ -185,10 +172,6 @@ const handleReset = () => {
   selectedFile.value = null
   uploadRef.value?.clearFiles()
   formRef.value?.resetFields()
-  genResult.value = ''
-  // 清空图表
-  const myChart = echarts.init(document.getElementById('genChart'))
-  myChart.clear()
 }
 </script>
 
@@ -234,13 +217,6 @@ const handleReset = () => {
     letter-spacing: -0.03em;
     line-height: 1.2;
   }
-}
-
-.content-grid {
-  display: grid;
-  grid-template-columns: 440px 1fr;
-  gap: 24px;
-  align-items: stretch;
 }
 
 .form-section {
@@ -390,157 +366,6 @@ const handleReset = () => {
   }
   50% {
     box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
-  }
-}
-
-.chart-section {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 0;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 4px 16px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-  transition: box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-
-  &:hover {
-    box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.04),
-      0 8px 32px rgba(0, 0, 0, 0.06);
-  }
-
-  :deep(.el-card__body) {
-    padding: 20px 28px 24px;
-  }
-
-  .preview-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #1a1a2e;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    &::before {
-      content: '';
-      width: 4px;
-      height: 20px;
-      background: linear-gradient(180deg, #10b981, #34d399);
-      border-radius: 2px;
-      flex-shrink: 0;
-    }
-  }
-
-  #genChart {
-    width: 100%;
-    height: 280px;
-    border-radius: 14px;
-    position: relative;
-
-    &:empty {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      background: linear-gradient(
-        135deg,
-        rgba(16, 185, 129, 0.03) 0%,
-        rgba(52, 211, 153, 0.03) 100%
-      );
-      border: 2px dashed #d9dce2;
-      min-height: 280px;
-
-      &::after {
-        content: '';
-        display: block;
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.1));
-        border-radius: 16px;
-        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5'%3E%3Cpath d='M3 16V4a1 1 0 011-1h4l2 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1z'/%3E%3Cpath d='M14 14l2 2 4-4'/%3E%3C/svg%3E")
-          center / contain no-repeat;
-        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5'%3E%3Cpath d='M3 16V4a1 1 0 011-1h4l2 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1z'/%3E%3Cpath d='M14 14l2 2 4-4'/%3E%3C/svg%3E")
-          center / contain no-repeat;
-        animation: float 3s ease-in-out infinite;
-      }
-    }
-
-    &:has(canvas) {
-      background: transparent;
-
-      canvas {
-        animation: chart-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-      }
-    }
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
-.result-section {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 0;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 4px 16px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-  transition: box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-
-  &:hover {
-    box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.04),
-      0 8px 32px rgba(0, 0, 0, 0.06);
-  }
-
-  :deep(.el-card__body) {
-    padding: 20px 28px;
-  }
-
-  #genResult {
-    font-size: 14px;
-    line-height: 1.9;
-    color: #4b5563;
-    font-weight: 500;
-    white-space: pre-wrap;
-    word-break: break-word;
-
-    &:empty::after {
-      content: '✨  生成后在此展示 AI 分析结果';
-      color: #9ca3af;
-      font-weight: 400;
-    }
-  }
-}
-
-@keyframes chart-in {
-  from {
-    opacity: 0;
-    transform: scale(0.92) translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@media (max-width: 1100px) {
-  .page-shell {
-    padding: 24px 20px;
-  }
-
-  .content-grid {
-    grid-template-columns: 1fr;
   }
 }
 </style>

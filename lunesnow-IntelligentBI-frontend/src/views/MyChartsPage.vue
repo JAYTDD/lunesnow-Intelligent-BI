@@ -75,16 +75,37 @@
                   <el-button link type="primary" size="small" @click="handleView(chart)"
                     >查看</el-button
                   >
+                  <el-button
+                    v-if="chart.status === 'failed'"
+                    link
+                    type="warning"
+                    size="small"
+                    @click="handleRetry(chart)"
+                    >重新生成</el-button
+                  >
                   <el-button link type="danger" size="small" @click="handleDelete(chart)"
                     >删除</el-button
                   >
                 </div>
               </div>
             </template>
-            <div :id="`chart-${chart.id}`" class="chart-canvas"></div>
+            <!-- 生成中/排队中 显示加载动画 -->
+            <div v-if="chart.status === 'waiting' || chart.status === 'running'" class="chart-loading">
+              <el-icon class="loading-icon" :size="48"><Loading /></el-icon>
+              <span class="loading-text">{{ statusTextMap[chart.status || ''] || '处理中' }}</span>
+              <span class="loading-sub">AI 正在生成图表，请稍候...</span>
+            </div>
+            <!-- 已完成 显示图表 -->
+            <div v-else-if="chart.status === 'succeed'" :id="`chart-${chart.id}`" class="chart-canvas"></div>
+            <!-- 失败 显示错误信息 -->
+            <div v-else class="chart-failed">
+              <el-icon :size="48" color="#f56c6c"><CircleCloseFilled /></el-icon>
+              <span class="failed-text">生成失败</span>
+              <span class="failed-sub">{{ chart.execMessage || '未知错误' }}</span>
+            </div>
             <div class="chart-footer">
-              <el-tag :type="chart.genResult ? 'success' : 'warning'" size="small">
-                {{ chart.genResult ? '已完成' : '生成中' }}
+              <el-tag :type="statusTagMap[chart.status || ''] || 'info'" size="small">
+                {{ statusTextMap[chart.status || ''] || chart.status }}
               </el-tag>
               <span class="chart-time">{{ formatTime(chart.createTime) }}</span>
             </div>
@@ -109,9 +130,18 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { listMyChartVoByPage, deleteChart } from '@/api/chartController'
+import { Loading, CircleCloseFilled } from '@element-plus/icons-vue'
+import {
+  listMyChartVoByPage,
+  deleteChart,
+  retryChartGen,
+  getChartStatus,
+} from '@/api/chartController'
 import * as echarts from 'echarts'
+
+const router = useRouter()
 
 const chartTypeTagMap: Record<string, string> = {
   折线图: 'primary',
@@ -120,6 +150,22 @@ const chartTypeTagMap: Record<string, string> = {
   散点图: 'danger',
   雷达图: 'info',
 }
+
+const statusTextMap: Record<string, string> = {
+  waiting: '排队中',
+  running: '生成中',
+  succeed: '已完成',
+  failed: '生成失败',
+}
+
+const statusTagMap: Record<string, string> = {
+  waiting: 'warning',
+  running: '',
+  succeed: 'success',
+  failed: 'danger',
+}
+
+const pollingTimer = ref<ReturnType<typeof setInterval> | null>(null)
 
 const searchForm = reactive<API.ChartQueryRequest>({
   name: '',
@@ -160,6 +206,7 @@ const loading = ref(false)
 const chartObserver = ref<IntersectionObserver | null>(null)
 const resizeHandlers = ref<Map<string, () => void>>(new Map())
 
+// 释放所有图表
 const disposeAllCharts = () => {
   tableData.value.forEach((chart) => {
     if (!chart.id) return
@@ -230,6 +277,7 @@ const initObserver = () => {
   )
 }
 
+// 加载图表列表
 const loadChartList = async () => {
   loading.value = true
   disposeAllCharts()
@@ -246,13 +294,75 @@ const loadChartList = async () => {
     if (res.data?.records) {
       tableData.value = res.data.records
       total.value = Number(res.data.total) || 0
-      await nextTick()
+      await nextTick() // 等待DOM更新
       tableData.value.forEach((chart) => observeChart(chart))
+      // 加载完后启动轮询
+      startPolling()
     }
   } catch (error: unknown) {
     ElMessage.error(`加载图表列表失败：${error instanceof Error ? error.message : '未知错误'}`)
   } finally {
     loading.value = false
+  }
+}
+
+// 启动轮询
+const startPolling = () => {
+  stopPolling()
+  pollingTimer.value = setInterval(async () => {
+    // 查找所有 waiting/running 的图表
+    const pendingCharts = tableData.value.filter(
+      (c) => c.status === 'waiting' || c.status === 'running',
+    )
+    if (pendingCharts.length === 0) {
+      stopPolling()
+      return
+    }
+    // 逐个查询状态
+    for (const chart of pendingCharts) {
+      if (!chart.id) continue
+      try {
+        const res = await getChartStatus({ id: chart.id })
+        if (res.data) {
+          chart.status = res.data.status
+          chart.genChart = res.data.genChart
+          chart.genResult = res.data.genResult
+          chart.execMessage = res.data.execMessage
+          // 如果有新结果，重新渲染图表
+          if (res.data.status === 'succeed' && res.data.genChart) {
+            await nextTick()
+            renderChart(chart)
+          }
+        }
+      } catch {
+        // 静默处理
+      }
+    }
+  }, 1000)
+}
+
+const stopPolling = () => {
+  if (pollingTimer.value) {
+    clearInterval(pollingTimer.value)
+    pollingTimer.value = null
+  }
+}
+
+const handleRetry = async (row: API.ChartVO) => {
+  if (!row.id) return
+  try {
+    await ElMessageBox.confirm('确定要重新生成该图表吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    await retryChartGen({ id: row.id })
+    ElMessage.success('已重新提交任务')
+    loadChartList()
+  } catch (error: unknown) {
+    if (error !== 'cancel') {
+      ElMessage.error(`重试失败：${error instanceof Error ? error.message : '未知错误'}`)
+    }
   }
 }
 
@@ -288,16 +398,21 @@ const handleReset = () => {
   loadChartList()
 }
 
+// 分页大小改变
 const handleSizeChange = (size: number) => {
   pageSize.value = size
   currentPage.value = 1
   loadChartList()
 }
 
+// 查看图表
 const handleView = (row: API.ChartVO) => {
-  ElMessage.info(`查看图表：${row.id}`)
+  if (row.id) {
+    router.push(`/chart/detail/${row.id}`)
+  }
 }
 
+// 删除图表
 const handleDelete = async (row: API.ChartVO) => {
   if (!row.id) return
   try {
@@ -322,6 +437,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  stopPolling()
   chartObserver.value?.disconnect()
   resizeHandlers.value.forEach((handler) => window.removeEventListener('resize', handler))
   resizeHandlers.value.clear()
@@ -402,8 +518,8 @@ onUnmounted(() => {
 
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
   padding: 20px;
 }
 
@@ -458,6 +574,69 @@ onUnmounted(() => {
 .chart-canvas {
   width: 100%;
   height: 240px;
+}
+
+.chart-loading {
+  width: 100%;
+  height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.05) 100%);
+  border-radius: 8px;
+
+  .loading-icon {
+    color: #10b981;
+    animation: spin 1.5s linear infinite;
+  }
+
+  .loading-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+
+  .loading-sub {
+    font-size: 13px;
+    color: #9ca3af;
+  }
+}
+
+.chart-failed {
+  width: 100%;
+  height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(245, 108, 108, 0.05) 0%, rgba(245, 108, 108, 0.05) 100%);
+  border-radius: 8px;
+
+  .failed-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f56c6c;
+  }
+
+  .failed-sub {
+    font-size: 12px;
+    color: #999;
+    max-width: 200px;
+    text-align: center;
+    word-break: break-all;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .chart-footer {

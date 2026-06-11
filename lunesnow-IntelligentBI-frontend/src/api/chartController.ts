@@ -132,6 +132,34 @@ export async function listMyChartVoByPage(
   })
 }
 
+/** 此处后端没有提供注释 POST /chart/retry/${param0} */
+export async function retryChartGen(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.retryChartGenParams,
+  options?: { [key: string]: any }
+) {
+  const { id: param0, ...queryParams } = params
+  return request<API.BaseResponseBiResponse>(`/chart/retry/${param0}`, {
+    method: 'POST',
+    params: { ...queryParams },
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 GET /chart/status/${param0} */
+export async function getChartStatus(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getChartStatusParams,
+  options?: { [key: string]: any }
+) {
+  const { id: param0, ...queryParams } = params
+  return request<API.BaseResponseBiResponse>(`/chart/status/${param0}`, {
+    method: 'GET',
+    params: { ...queryParams },
+    ...(options || {}),
+  })
+}
+
 /** 此处后端没有提供注释 POST /chart/update */
 export async function updateChart(body: API.ChartUpdateRequest, options?: { [key: string]: any }) {
   return request<API.BaseResponseBoolean>('/chart/update', {

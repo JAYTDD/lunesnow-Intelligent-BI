@@ -26,6 +26,11 @@ const router = createRouter({
           component: () => import('@/views/MyChartsPage.vue'),
         },
         {
+          path: 'chart/detail/:id',
+          name: 'chartDetail',
+          component: () => import('@/views/ChartDetailPage.vue'),
+        },
+        {
           path: 'admin/userManage',
           name: 'userManage',
           component: () => import('@/views/admin/UserManagePage.vue'),
@@ -56,6 +61,11 @@ const router = createRouter({
       component: () => import('@/views/NotFoundPage.vue'),
     },
   ],
+})
+
+// 路由切换后滚动到顶部
+router.afterEach(() => {
+  window.scrollTo(0, 0)
 })
 
 export default router

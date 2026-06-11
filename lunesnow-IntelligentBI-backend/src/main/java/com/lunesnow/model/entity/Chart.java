@@ -46,6 +46,32 @@ public class Chart implements Serializable {
      * 生成的分析结论
      */
     private String genResult;
+
+    /**
+     * 任务状态: waiting / running / succeed / failed
+     */
+    private String status;
+
+    /**
+     * 执行信息（执行中或失败时的详细信息）
+     */
+    private String execMessage;
+
+    /**
+     * 等待时间（毫秒）
+     */
+    private Long waitTime;
+
+    /**
+     * 执行时间（毫秒）
+     */
+    private Long runningTime;
+
+    /**
+     * 原始 CSV 数据（用于重新生成）
+     */
+    private String chartData;
+
     /**
      * 创建用户 id
      */

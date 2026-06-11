@@ -4,21 +4,17 @@ import cn.hutool.core.io.FileUtil;
 import com.lunesnow.common.BaseResponse;
 import com.lunesnow.common.ErrorCode;
 import com.lunesnow.common.ResultUtils;
-import com.lunesnow.constant.FileConstant;
 import com.lunesnow.exception.BusinessException;
-import com.lunesnow.manager.CosManager;
 import com.lunesnow.model.dto.file.UploadFileRequest;
 import com.lunesnow.model.entity.User;
 import com.lunesnow.model.enums.FileUploadBizEnum;
 import com.lunesnow.service.UserService;
-import java.io.File;
 import java.util.Arrays;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -38,11 +34,8 @@ public class FileController {
     @Resource
     private UserService userService;
 
-    @Resource
-    private CosManager cosManager;
-
     /**
-     * 文件上传
+     * 文件上传（本地存储）
      *
      * @param multipartFile
      * @param uploadFileRequest
@@ -60,29 +53,18 @@ public class FileController {
         }
         validFile(multipartFile, fileUploadBizEnum);
         User loginUser = userService.getLoginUser(request);
-        // 文件目录：根据业务、用户来划分
-        String uuid = RandomStringUtils.randomAlphanumeric(8);
-        String filename = uuid + "-" + multipartFile.getOriginalFilename();
-        String filepath = String.format("/%s/%s/%s", fileUploadBizEnum.getValue(), loginUser.getId(), filename);
-        File file = null;
+
         try {
-            // 上传文件
-            file = File.createTempFile(filepath, null);
-            multipartFile.transferTo(file);
-            cosManager.putObject(filepath, file);
-            // 返回可访问地址
-            return ResultUtils.success(FileConstant.COS_HOST + filepath);
+            // 保存到本地临时目录
+            String filename = loginUser.getId() + "-" + multipartFile.getOriginalFilename();
+            String tempDir = System.getProperty("java.io.tmpdir");
+            String filepath = tempDir + "/" + filename;
+            multipartFile.transferTo(new java.io.File(filepath));
+            log.info("文件已保存到本地: {}", filepath);
+            return ResultUtils.success(filepath);
         } catch (Exception e) {
-            log.error("file upload error, filepath = " + filepath, e);
+            log.error("文件上传失败", e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "上传失败");
-        } finally {
-            if (file != null) {
-                // 删除临时文件
-                boolean delete = file.delete();
-                if (!delete) {
-                    log.error("file delete error, filepath = {}", filepath);
-                }
-            }
         }
     }
 

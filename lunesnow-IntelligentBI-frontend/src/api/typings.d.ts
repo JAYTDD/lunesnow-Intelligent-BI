@@ -35,6 +35,12 @@ declare namespace API {
     message?: string
   }
 
+  type BaseResponseMapStringObject = {
+    code?: number
+    data?: Record<string, any>
+    message?: string
+  }
+
   type BaseResponsePageChart = {
     code?: number
     data?: PageChart
@@ -81,6 +87,8 @@ declare namespace API {
     genChart?: string
     genResult?: string
     chartId?: number
+    status?: string
+    execMessage?: string
   }
 
   type Chart = {
@@ -90,6 +98,11 @@ declare namespace API {
     chartType?: string
     genChart?: string
     genResult?: string
+    status?: string
+    execMessage?: string
+    waitTime?: number
+    runningTime?: number
+    chartData?: string
     userId?: number
     createTime?: string
     updateTime?: string
@@ -138,6 +151,8 @@ declare namespace API {
     chartType?: string
     genChart?: string
     genResult?: string
+    status?: string
+    execMessage?: string
     userId?: number
     user?: UserVO
     createTime?: string
@@ -159,8 +174,16 @@ declare namespace API {
     chartId: number
   }
 
+  type getChartStatusParams = {
+    id: number
+  }
+
   type getChartVOByIdParams = {
     id: number
+  }
+
+  type getRateLimitStatusParams = {
+    key: string
   }
 
   type getUserByIdParams = {
@@ -241,6 +264,14 @@ declare namespace API {
     pages?: number
   }
 
+  type resetRateLimitParams = {
+    key: string
+  }
+
+  type retryChartGenParams = {
+    id: number
+  }
+
   type uploadFileParams = {
     uploadFileRequest: UploadFileRequest
   }
@@ -253,11 +284,8 @@ declare namespace API {
     id?: number
     userAccount?: string
     userPassword?: string
-    unionId?: string
-    mpOpenId?: string
     userName?: string
     userAvatar?: string
-    userProfile?: string
     userRole?: string
     createTime?: string
     updateTime?: string
@@ -282,8 +310,6 @@ declare namespace API {
     sortField?: string
     sortOrder?: string
     id?: number
-    unionId?: string
-    mpOpenId?: string
     userName?: string
     userRole?: string
   }
