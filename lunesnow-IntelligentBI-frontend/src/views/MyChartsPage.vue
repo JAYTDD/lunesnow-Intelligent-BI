@@ -139,6 +139,8 @@ import {
   retryChartGen,
   getChartStatus,
 } from '@/api/chartController'
+import { safeRenderChart } from '@/utils/chartValidator'
+import { usePolling } from '@/composables/usePolling'
 import * as echarts from 'echarts'
 
 const router = useRouter()
@@ -164,8 +166,6 @@ const statusTagMap: Record<string, string> = {
   succeed: 'success',
   failed: 'danger',
 }
-
-const pollingTimer = ref<ReturnType<typeof setInterval> | null>(null)
 
 const searchForm = reactive<API.ChartQueryRequest>({
   name: '',
@@ -223,31 +223,28 @@ const disposeAllCharts = () => {
   })
 }
 
-// 渲染图表
+// 渲染图表（带校验）
 const renderChart = (chart: API.ChartVO) => {
   if (!chart.genChart || !chart.id) return
   const chartDom = document.getElementById(`chart-${chart.id}`)
   if (!chartDom) return
 
-  try {
-    const existingInstance = echarts.getInstanceByDom(chartDom)
-    if (existingInstance) existingInstance.dispose()
+  // 先清理旧实例
+  const existingInstance = echarts.getInstanceByDom(chartDom)
+  if (existingInstance) existingInstance.dispose()
 
-    let option
-    try {
-      option = JSON.parse(chart.genChart)
-    } catch {
-      option = new Function('return ' + chart.genChart)()
-    }
-
+  // 安全渲染（解析 + 校验 + 渲染）
+  const { success, error } = safeRenderChart(chart.genChart, (option) => {
     const myChart = echarts.init(chartDom)
     myChart.setOption(option)
 
     const handler = () => myChart.resize()
     window.addEventListener('resize', handler)
     resizeHandlers.value.set(String(chart.id), handler)
-  } catch (error) {
-    console.error(`渲染图表 ${chart.id} 失败:`, error)
+  })
+
+  if (!success) {
+    console.error(`图表 ${chart.id} 渲染失败:`, error)
   }
 }
 
@@ -277,6 +274,45 @@ const initObserver = () => {
   )
 }
 
+// 轮询回调
+const pollCallback = async (): Promise<boolean> => {
+  // 查找所有 waiting/running 的图表
+  const pendingCharts = tableData.value.filter(
+    (c) => c.status === 'waiting' || c.status === 'running',
+  )
+  if (pendingCharts.length === 0) {
+    return true // 停止轮询
+  }
+  // 逐个查询状态
+  for (const chart of pendingCharts) {
+    if (!chart.id) continue
+    try {
+      const res = await getChartStatus({ id: chart.id })
+      if (res.data) {
+        chart.status = res.data.status
+        chart.genChart = res.data.genChart
+        chart.genResult = res.data.genResult
+        chart.execMessage = res.data.execMessage
+        // 如果有新结果，重新渲染图表
+        if (res.data.status === 'succeed' && res.data.genChart) {
+          await nextTick()
+          renderChart(chart)
+        }
+      }
+    } catch {
+      // 静默处理
+    }
+  }
+  return false // 继续轮询
+}
+
+// 使用轮询 Hook（指数退避 + Page Visibility）
+const { start: startPolling, stop: stopPolling } = usePolling(pollCallback, {
+  interval: 3000,       // 初始 3 秒
+  maxInterval: 30000,   // 最大 30 秒
+  backoff: 1.5          // 每次 *1.5
+})
+
 // 加载图表列表
 const loadChartList = async () => {
   loading.value = true
@@ -303,48 +339,6 @@ const loadChartList = async () => {
     ElMessage.error(`加载图表列表失败：${error instanceof Error ? error.message : '未知错误'}`)
   } finally {
     loading.value = false
-  }
-}
-
-// 启动轮询
-const startPolling = () => {
-  stopPolling()
-  pollingTimer.value = setInterval(async () => {
-    // 查找所有 waiting/running 的图表
-    const pendingCharts = tableData.value.filter(
-      (c) => c.status === 'waiting' || c.status === 'running',
-    )
-    if (pendingCharts.length === 0) {
-      stopPolling()
-      return
-    }
-    // 逐个查询状态
-    for (const chart of pendingCharts) {
-      if (!chart.id) continue
-      try {
-        const res = await getChartStatus({ id: chart.id })
-        if (res.data) {
-          chart.status = res.data.status
-          chart.genChart = res.data.genChart
-          chart.genResult = res.data.genResult
-          chart.execMessage = res.data.execMessage
-          // 如果有新结果，重新渲染图表
-          if (res.data.status === 'succeed' && res.data.genChart) {
-            await nextTick()
-            renderChart(chart)
-          }
-        }
-      } catch {
-        // 静默处理
-      }
-    }
-  }, 1000)
-}
-
-const stopPolling = () => {
-  if (pollingTimer.value) {
-    clearInterval(pollingTimer.value)
-    pollingTimer.value = null
   }
 }
 

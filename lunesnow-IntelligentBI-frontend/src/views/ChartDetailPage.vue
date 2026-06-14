@@ -94,6 +94,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Loading, CircleCloseFilled } from '@element-plus/icons-vue'
 import { getChartVoById, getChartData } from '@/api/chartController'
+import { safeRenderChart } from '@/utils/chartValidator'
 import * as echarts from 'echarts'
 
 const route = useRoute()
@@ -138,7 +139,7 @@ const formatTime = (time?: string) => {
   })
 }
 
-// 渲染图表
+// 渲染图表（带校验）
 const renderChart = () => {
   if (chart.value.status !== 'succeed' || !chart.value.genChart) return
 
@@ -146,24 +147,21 @@ const renderChart = () => {
     const chartDom = document.getElementById('detailChart')
     if (!chartDom) return
 
-    try {
-      const existingInstance = echarts.getInstanceByDom(chartDom)
-      if (existingInstance) existingInstance.dispose()
+    // 先清理旧实例
+    const existingInstance = echarts.getInstanceByDom(chartDom)
+    if (existingInstance) existingInstance.dispose()
 
-      let option
-      try {
-        option = JSON.parse(chart.value.genChart!)
-      } catch {
-        option = new Function('return ' + chart.value.genChart)()
-      }
-
+    // 安全渲染（解析 + 校验 + 渲染）
+    const { success, error } = safeRenderChart(chart.value.genChart, (option) => {
       const myChart = echarts.init(chartDom)
       myChart.setOption(option)
 
       const handler = () => myChart.resize()
       window.addEventListener('resize', handler)
-    } catch (error) {
-      console.error('渲染图表失败:', error)
+    })
+
+    if (!success) {
+      ElMessage.error(`图表渲染失败: ${error}`)
     }
   })
 }
