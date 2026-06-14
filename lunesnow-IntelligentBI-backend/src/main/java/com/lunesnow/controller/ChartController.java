@@ -15,6 +15,7 @@ import com.lunesnow.exception.BusinessException;
 import com.lunesnow.exception.ThrowUtils;
 import com.lunesnow.model.dto.chart.*;
 import com.lunesnow.model.dto.file.UploadFileRequest;
+import com.lunesnow.mq.ChartMessageProducer;
 import com.lunesnow.model.entity.Chart;
 import com.lunesnow.model.entity.User;
 import com.lunesnow.model.enums.FileUploadBizEnum;
@@ -39,7 +40,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 图表接口
@@ -60,7 +60,7 @@ public class ChartController {
     private UserService userService;
 
     @Resource
-    private ThreadPoolExecutor chartTaskExecutor;
+    private ChartMessageProducer chartMessageProducer;
 
     // region 增删改查
 
@@ -298,14 +298,13 @@ public class ChartController {
         // 2. 将上传的文件创建为数据库表
         chartDataService.createTableFromCsv(chart.getId(), csvData);
 
-        // 3. 提交到线程池异步执行 AI 生成
+        // 3. 发送消息到 RabbitMQ
         final Long chartId = chart.getId();
-        final String userGoal = goal + (StringUtils.isNotBlank(chartType) ? "，请使用" + chartType : "");
         try {
-            chartTaskExecutor.execute(() -> executeChartGenTask(chartId, userGoal));
-        } catch (java.util.concurrent.RejectedExecutionException e) {
-            // 线程池满，标记任务失败
-            log.warn("线程池已满，图表任务被拒绝, chartId={}", chartId);
+            chartMessageProducer.sendChartTask(chartId);
+        } catch (Exception e) {
+            // 发送失败，标记任务失败
+            log.warn("发送图表任务消息失败, chartId={}", chartId);
             Chart updateFailed = new Chart();
             updateFailed.setId(chartId);
             updateFailed.setStatus("failed");
@@ -317,124 +316,6 @@ public class ChartController {
         BiResponse biResponse = new BiResponse();
         biResponse.setChartId(chartId);
         return ResultUtils.success(biResponse);
-    }
-
-    /**
-     * 任务超时时间：5分钟（毫秒）
-     */
-    private static final long TASK_TIMEOUT_MS = 5 * 60 * 1000;
-
-    /**
-     * 执行图表生成任务（在线程池中运行）
-     */
-    private void executeChartGenTask(Long chartId, String userGoal) {
-        long startTime = System.currentTimeMillis();
-        try {
-            // 更新状态为 running
-            Chart updateRunning = new Chart();
-            updateRunning.setId(chartId);
-            updateRunning.setStatus("running");
-            Chart existingChart = chartService.getById(chartId);
-            if (existingChart != null) {
-                updateRunning.setWaitTime(startTime - existingChart.getCreateTime().getTime());
-            }
-            chartService.updateById(updateRunning);
-
-            // 检查是否已超时
-            if (System.currentTimeMillis() - startTime > TASK_TIMEOUT_MS) {
-                throw new RuntimeException("任务执行超时（超过5分钟）");
-            }
-
-            // 构造 prompt
-            final String prompt = "你是一个数据分析师和前端开发专家，接下来我会按照以下固定格式给你提供内容：\n" +
-                    "分析需求：\n" +
-                    "{数据分析的需求或者目标}\n" +
-                    "原始数据：\n" +
-                    "{csv格式的原始数据，用,作为分隔符}\n" +
-                    "请根据这两部分内容，按照以下指定格式生成内容（此外不要输出任何多余的开头、结尾、注释）\n" +
-                    "【【【【【\n" +
-                    "{前端 Echarts V5 的 option 配置对象js代码，合理地将数据进行可视化，不要生成任何多余的内容，比如注释}\n" +
-                    "【【【【【\n" +
-                    "{明确的数据分析结论、越详细越好，不要生成多余的注释}";
-
-            StringBuilder userInput = new StringBuilder();
-            userInput.append("分析需求：\n");
-            userInput.append(userGoal).append("\n");
-            userInput.append("原始数据：\n");
-            // 从数据库重新获取 csvData
-            Chart chartWithCsv = chartService.getById(chartId);
-            userInput.append(chartWithCsv.getChartData()).append("\n");
-
-            // 调用 DeepSeek AI
-            String aiResponse = DeepSeekUtils.generateContent(prompt, userInput.toString());
-
-            // 检查是否已超时
-            if (System.currentTimeMillis() - startTime > TASK_TIMEOUT_MS) {
-                throw new RuntimeException("任务执行超时（超过5分钟）");
-            }
-
-            // 解析 AI 响应
-            String[] parts = aiResponse.split("【【【【【");
-            String genChart = parts.length > 1 ? parts[1].trim() : "";
-            genChart = genChart.replaceAll("(?s)```(?:javascript|js)?\\s*", "").trim();
-            genChart = genChart.replaceFirst("^(?:let|var|const)?\\s*option\\s*=\\s*", "");
-            if (genChart.endsWith(";")) genChart = genChart.substring(0, genChart.length() - 1).trim();
-            String genResult = parts.length > 2 ? parts[2].trim() : aiResponse;
-
-            // 验证 AI 生成结果的有效性
-            validateAiResult(genChart, genResult);
-
-            long runningTime = System.currentTimeMillis() - startTime;
-
-            // 更新为 succeed
-            Chart updateSuccess = new Chart();
-            updateSuccess.setId(chartId);
-            updateSuccess.setStatus("succeed");
-            updateSuccess.setExecMessage("success");
-            updateSuccess.setGenChart(genChart);
-            updateSuccess.setGenResult(genResult);
-            updateSuccess.setRunningTime(runningTime);
-            chartService.updateById(updateSuccess);
-
-            log.info("图表生成任务完成, chartId={}, 耗时={}ms", chartId, runningTime);
-
-        } catch (Exception e) {
-            long runningTime = System.currentTimeMillis() - startTime;
-            log.error("图表生成任务失败, chartId={}", chartId, e);
-
-            // 更新为 failed
-            Chart updateFailed = new Chart();
-            updateFailed.setId(chartId);
-            updateFailed.setStatus("failed");
-            updateFailed.setExecMessage(e.getMessage());
-            updateFailed.setRunningTime(runningTime);
-            chartService.updateById(updateFailed);
-        }
-    }
-
-    /**
-     * 验证 AI 生成结果的有效性
-     */
-    private void validateAiResult(String genChart, String genResult) {
-        // 1. 检查图表配置是否为空
-        if (genChart == null || genChart.isEmpty()) {
-            throw new RuntimeException("AI 未生成有效的图表配置");
-        }
-
-        // 2. 检查图表配置是否包含基本的 ECharts 配置
-        if (!genChart.contains("type") && !genChart.contains("series") && !genChart.contains("data")) {
-            throw new RuntimeException("AI 生成的图表配置格式不正确，缺少必要的 ECharts 配置项");
-        }
-
-        // 3. 检查分析结果是否为空
-        if (genResult == null || genResult.isEmpty()) {
-            throw new RuntimeException("AI 未生成有效的分析结论");
-        }
-
-        // 4. 检查分析结果长度（至少10个字符）
-        if (genResult.length() < 10) {
-            throw new RuntimeException("AI 生成的分析结论过于简短，可能不是有效的分析结果");
-        }
     }
 
     /**
@@ -453,13 +334,6 @@ public class ChartController {
         // 校验状态：只能重试 failed 状态
         ThrowUtils.throwIf(!"failed".equals(chart.getStatus()), ErrorCode.PARAMS_ERROR, "只能重新生成失败的图表");
 
-        // 构造目标
-        String userGoal = chart.getGoal();
-        if (StringUtils.isNotBlank(chart.getChartType())) {
-            userGoal += "，请使用" + chart.getChartType();
-        }
-        final String finalUserGoal = userGoal;
-
         // 重置状态为 waiting
         Chart updateWaiting = new Chart();
         updateWaiting.setId(id);
@@ -469,12 +343,12 @@ public class ChartController {
         updateWaiting.setExecMessage(null);
         chartService.updateById(updateWaiting);
 
-        // 提交到线程池
+        // 发送消息到 RabbitMQ
         try {
-            chartTaskExecutor.execute(() -> executeChartGenTask(id, finalUserGoal));
-        } catch (java.util.concurrent.RejectedExecutionException e) {
-            // 线程池满，标记任务失败
-            log.warn("线程池已满，重试任务被拒绝, chartId={}", id);
+            chartMessageProducer.sendChartTask(id);
+        } catch (Exception e) {
+            // 发送失败，标记任务失败
+            log.warn("发送重试任务消息失败, chartId={}", id);
             Chart updateFailed = new Chart();
             updateFailed.setId(id);
             updateFailed.setStatus("failed");
