@@ -331,7 +331,7 @@ const loadChartList = async () => {
       tableData.value = res.data.records
       total.value = Number(res.data.total) || 0
       await nextTick() // 等待DOM更新
-      tableData.value.forEach((chart) => observeChart(chart))
+      tableData.value.forEach((chart) => observeChart(chart)) // 观察所有图表
       // 加载完后启动轮询
       startPolling()
     }
@@ -342,6 +342,7 @@ const loadChartList = async () => {
   }
 }
 
+// 重新生成
 const handleRetry = async (row: API.ChartVO) => {
   if (!row.id) return
   try {
@@ -360,6 +361,7 @@ const handleRetry = async (row: API.ChartVO) => {
   }
 }
 
+// 时间格式化
 const formatTime = (time?: string) => {
   if (!time) return ''
   const date = new Date(time)
@@ -432,9 +434,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopPolling()
-  chartObserver.value?.disconnect()
-  resizeHandlers.value.forEach((handler) => window.removeEventListener('resize', handler))
-  resizeHandlers.value.clear()
+  chartObserver.value?.disconnect() // 取消图表观察者
+  resizeHandlers.value.forEach((handler) => window.removeEventListener('resize', handler)) // 取消窗口大小监听
+  resizeHandlers.value.clear()  // 清空监听器
 })
 </script>
 

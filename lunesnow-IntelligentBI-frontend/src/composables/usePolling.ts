@@ -2,6 +2,7 @@
  * 通用轮询 Hook
  * 支持指数退避策略 + Page Visibility API
  */
+import { log } from 'console'
 import { ref, onUnmounted, onMounted } from 'vue'
 
 interface PollingOptions {
@@ -19,26 +20,20 @@ interface PollingOptions {
  * @param options 配置选项
  * @returns start/stop 控制函数
  */
-export function usePolling(
-  callback: () => Promise<boolean>,
-  options: PollingOptions = {}
-) {
-  const {
-    interval = 3000,
-    maxInterval = 30000,
-    backoff = 1.5
-  } = options
+export function usePolling(callback: () => Promise<boolean>, options: PollingOptions = {}) {
+  const { interval = 3000, maxInterval = 30000, backoff = 1.5 } = options
 
-  const currentInterval = ref(interval)
-  const timer = ref<ReturnType<typeof setInterval>>()
-  const isRunning = ref(false)
-  const isPageVisible = ref(true)
+  const currentInterval = ref(interval) // 当前轮询间隔
+  const timer = ref<ReturnType<typeof setInterval>>() // 定时器
+  const isRunning = ref(false) // 是否正在运行
+  const isPageVisible = ref(true) // 页面是否可见
 
   // 执行轮询
   const tick = async () => {
     if (!isPageVisible.value) return
 
     try {
+      // 执行回调函数，返回 true 表示停止轮询
       const shouldStop = await callback()
       if (shouldStop) {
         stop()
@@ -85,6 +80,7 @@ export function usePolling(
 
   // 暂停（页面不可见时）
   const pause = () => {
+    console.log('暂停轮询')
     if (timer.value) {
       clearTimeout(timer.value)
       timer.value = undefined
@@ -94,6 +90,7 @@ export function usePolling(
   // 恢复（页面可见时）
   const resume = () => {
     if (isRunning.value && !timer.value) {
+      console.log('恢复轮询')
       const scheduleNext = () => {
         if (!isRunning.value) return
         timer.value = setTimeout(async () => {
@@ -116,6 +113,7 @@ export function usePolling(
   }
 
   onMounted(() => {
+    // 监听页面可见性改变
     document.addEventListener('visibilitychange', handleVisibilityChange)
   })
 
@@ -128,6 +126,6 @@ export function usePolling(
     start,
     stop,
     isRunning,
-    currentInterval
+    currentInterval,
   }
 }
