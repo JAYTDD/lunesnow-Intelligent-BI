@@ -47,8 +47,8 @@ redisson:
 # todo 需替换配置，然后取消注释
 # elasticsearch:
 #   uris: http://localhost:9200
-#   username: root
-#   password: 123456
+#   username: ${ES_USERNAME:}
+#   password: ${ES_PASSWORD:}
 
 # 文件上传
 spring.servlet.multipart:
