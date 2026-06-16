@@ -12,6 +12,7 @@ import com.lunesnow.mapper.ChartMapper;
 import com.lunesnow.model.dto.chart.ChartQueryRequest;
 import com.lunesnow.model.entity.Chart;
 import com.lunesnow.model.entity.User;
+import com.lunesnow.model.vo.ChartStatisticsVO;
 import com.lunesnow.model.vo.ChartVO;
 import com.lunesnow.model.vo.UserVO;
 import com.lunesnow.service.ChartService;
@@ -147,6 +148,57 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart> implements
         // 将转换后的列表设置到分页对象中并返回
         chartVOPage.setRecords(chartVOList);
         return chartVOPage;
+    }
+
+    /**
+     * 获取图表统计信息
+     *
+     * @param request
+     * @return
+     */
+    @Override
+    public ChartStatisticsVO getStatistics(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        Long userId = loginUser.getId();
+
+        // 查询当前用户的所有图表
+        QueryWrapper<Chart> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userId", userId);
+        List<Chart> charts = this.list(queryWrapper);
+
+        // 统计各状态数量
+        long totalCount = charts.size();
+        long successCount = charts.stream().filter(c -> "succeed".equals(c.getStatus())).count();
+        long failedCount = charts.stream().filter(c -> "failed".equals(c.getStatus())).count();
+        long runningCount = charts.stream()
+                .filter(c -> "waiting".equals(c.getStatus()) || "running".equals(c.getStatus()))
+                .count();
+
+        // 计算成功率
+        double successRate = totalCount > 0 ? Math.round(successCount * 100.0 / totalCount * 10.0) / 10.0 : 0.0;
+
+        // 获取最近5条图表（按创建时间倒序）
+        UserVO userVO = userService.getUserVO(loginUser);
+        List<ChartVO> recentCharts = charts.stream()
+                .sorted((a, b) -> b.getCreateTime().compareTo(a.getCreateTime()))
+                .limit(5)
+                .map(chart -> {
+                    ChartVO chartVO = ChartVO.objToVo(chart);
+                    chartVO.setUser(userVO);
+                    return chartVO;
+                })
+                .collect(Collectors.toList());
+
+        // 构建统计结果
+        ChartStatisticsVO statistics = new ChartStatisticsVO();
+        statistics.setTotalCount(totalCount);
+        statistics.setSuccessCount(successCount);
+        statistics.setFailedCount(failedCount);
+        statistics.setRunningCount(runningCount);
+        statistics.setSuccessRate(successRate);
+        statistics.setRecentCharts(recentCharts);
+
+        return statistics;
     }
 
 }

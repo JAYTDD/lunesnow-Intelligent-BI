@@ -11,6 +11,12 @@ declare namespace API {
     message?: string
   }
 
+  type BaseResponseChartStatisticsVO = {
+    code?: number
+    data?: ChartStatisticsVO
+    message?: string
+  }
+
   type BaseResponseChartVO = {
     code?: number
     data?: ChartVO
@@ -116,6 +122,11 @@ declare namespace API {
     chartType?: string
   }
 
+  type ChartEditConfigRequest = {
+    id?: number
+    genChart?: string
+  }
+
   type ChartEditRequest = {
     id?: number
     name?: string
@@ -134,6 +145,15 @@ declare namespace API {
     goal?: string
     chartType?: string
     userId?: number
+  }
+
+  type ChartStatisticsVO = {
+    totalCount?: number
+    successCount?: number
+    failedCount?: number
+    runningCount?: number
+    successRate?: number
+    recentCharts?: ChartVO[]
   }
 
   type ChartUpdateRequest = {

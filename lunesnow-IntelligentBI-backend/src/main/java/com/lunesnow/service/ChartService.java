@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.lunesnow.model.dto.chart.ChartQueryRequest;
 import com.lunesnow.model.entity.Chart;
+import com.lunesnow.model.vo.ChartStatisticsVO;
 import com.lunesnow.model.vo.ChartVO;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -46,4 +47,12 @@ public interface ChartService extends IService<Chart> {
      * @return
      */
     Page<ChartVO> getChartVOPage(Page<Chart> chartPage, HttpServletRequest request);
+
+    /**
+     * 获取图表统计数据（当前用户）
+     *
+     * @param request
+     * @return
+     */
+    ChartStatisticsVO getStatistics(HttpServletRequest request);
 }

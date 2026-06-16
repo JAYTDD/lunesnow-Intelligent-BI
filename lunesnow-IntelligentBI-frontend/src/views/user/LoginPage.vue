@@ -2,9 +2,9 @@
   <div class="auth-page">
     <div class="auth-card">
       <div class="auth-copy">
-        <div class="eyebrow">Intelligent BI</div>
-        <h1>极简后台模板</h1>
-        <p>快速开发属于自己的前端项目。登录后进入后台管理页，支持用户管理、注册和权限控制。</p>
+        <div class="eyebrow">智能 BI 系统</div>
+        <h1>数据驱动决策</h1>
+        <p>上传 Excel，AI 自动生成 ECharts 可视化图表。让数据说话，用图表讲述业务故事。</p>
       </div>
 
       <el-form

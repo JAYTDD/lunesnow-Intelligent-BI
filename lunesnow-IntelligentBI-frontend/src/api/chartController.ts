@@ -38,6 +38,21 @@ export async function editChart(body: API.ChartEditRequest, options?: { [key: st
   })
 }
 
+/** 此处后端没有提供注释 POST /chart/edit/config */
+export async function editChartConfig(
+  body: API.ChartEditConfigRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean>('/chart/edit/config', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
 /** 此处后端没有提供注释 POST /chart/gen */
 export async function getChartByAi(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
@@ -142,6 +157,14 @@ export async function retryChartGen(
   return request<API.BaseResponseBiResponse>(`/chart/retry/${param0}`, {
     method: 'POST',
     params: { ...queryParams },
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 GET /chart/statistics */
+export async function getStatistics(options?: { [key: string]: any }) {
+  return request<API.BaseResponseChartStatisticsVO>('/chart/statistics', {
+    method: 'GET',
     ...(options || {}),
   })
 }

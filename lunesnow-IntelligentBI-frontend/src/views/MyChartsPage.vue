@@ -90,13 +90,20 @@
               </div>
             </template>
             <!-- 生成中/排队中 显示加载动画 -->
-            <div v-if="chart.status === 'waiting' || chart.status === 'running'" class="chart-loading">
+            <div
+              v-if="chart.status === 'waiting' || chart.status === 'running'"
+              class="chart-loading"
+            >
               <el-icon class="loading-icon" :size="48"><Loading /></el-icon>
               <span class="loading-text">{{ statusTextMap[chart.status || ''] || '处理中' }}</span>
               <span class="loading-sub">AI 正在生成图表，请稍候...</span>
             </div>
             <!-- 已完成 显示图表 -->
-            <div v-else-if="chart.status === 'succeed'" :id="`chart-${chart.id}`" class="chart-canvas"></div>
+            <div
+              v-else-if="chart.status === 'succeed'"
+              :id="`chart-${chart.id}`"
+              class="chart-canvas"
+            ></div>
             <!-- 失败 显示错误信息 -->
             <div v-else class="chart-failed">
               <el-icon :size="48" color="#f56c6c"><CircleCloseFilled /></el-icon>
@@ -243,6 +250,7 @@ const renderChart = (chart: API.ChartVO) => {
     resizeHandlers.value.set(String(chart.id), handler)
   })
 
+  // 渲染失败
   if (!success) {
     console.error(`图表 ${chart.id} 渲染失败:`, error)
   }
@@ -308,9 +316,9 @@ const pollCallback = async (): Promise<boolean> => {
 
 // 使用轮询 Hook（指数退避 + Page Visibility）
 const { start: startPolling, stop: stopPolling } = usePolling(pollCallback, {
-  interval: 3000,       // 初始 3 秒
-  maxInterval: 30000,   // 最大 30 秒
-  backoff: 1.5          // 每次 *1.5
+  interval: 3000, // 初始 3 秒
+  maxInterval: 30000, // 最大 30 秒
+  backoff: 1.5, // 每次 *1.5
 })
 
 // 加载图表列表
@@ -436,7 +444,7 @@ onUnmounted(() => {
   stopPolling()
   chartObserver.value?.disconnect() // 取消图表观察者
   resizeHandlers.value.forEach((handler) => window.removeEventListener('resize', handler)) // 取消窗口大小监听
-  resizeHandlers.value.clear()  // 清空监听器
+  resizeHandlers.value.clear() // 清空监听器
 })
 </script>
 

@@ -20,6 +20,7 @@ import com.lunesnow.model.entity.Chart;
 import com.lunesnow.model.entity.User;
 import com.lunesnow.model.enums.FileUploadBizEnum;
 import com.lunesnow.model.vo.BiResponse;
+import com.lunesnow.model.vo.ChartStatisticsVO;
 import com.lunesnow.model.vo.ChartVO;
 import com.lunesnow.service.ChartService;
 import com.lunesnow.service.ChartDataService;
@@ -61,6 +62,9 @@ public class ChartController {
 
     @Resource
     private ChartMessageProducer chartMessageProducer;
+
+    @Resource
+    private com.lunesnow.manager.ChartTaskLimiter chartTaskLimiter;
 
     // region 增删改查
 
@@ -246,6 +250,51 @@ public class ChartController {
     }
 
     /**
+     * 编辑图表配置（ECharts 配置代码）
+     *
+     * @param chartEditConfigRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/edit/config")
+    public BaseResponse<Boolean> editChartConfig(@RequestBody ChartEditConfigRequest chartEditConfigRequest,
+                                                 HttpServletRequest request) {
+        if (chartEditConfigRequest == null || chartEditConfigRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        if (StringUtils.isBlank(chartEditConfigRequest.getGenChart())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "图表配置不能为空");
+        }
+        User loginUser = userService.getLoginUser(request);
+        long id = chartEditConfigRequest.getId();
+        // 判断是否存在
+        Chart oldChart = chartService.getById(id);
+        ThrowUtils.throwIf(oldChart == null, ErrorCode.NOT_FOUND_ERROR);
+        // 仅本人或管理员可编辑
+        if (!oldChart.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        // 只更新 genChart 字段
+        Chart chart = new Chart();
+        chart.setId(id);
+        chart.setGenChart(chartEditConfigRequest.getGenChart());
+        boolean result = chartService.updateById(chart);
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 获取图表统计数据（当前用户）
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/statistics")
+    public BaseResponse<ChartStatisticsVO> getStatistics(HttpServletRequest request) {
+        ChartStatisticsVO statistics = chartService.getStatistics(request);
+        return ResultUtils.success(statistics);
+    }
+
+    /**
      * 智能分析（异步任务）
      *
      * @param multipartFile
@@ -257,8 +306,8 @@ public class ChartController {
      */
     @PostMapping("/gen")
     @RateLimit(
-            permitsPerSecond = 2,
-            burstCapacity = 5,
+            permitsPerSecond = 2,   // 每秒允许2个请求
+            burstCapacity = 5,      // 最大并发数5个
             limitType = RateLimit.LimitType.USER,
             message = "AI 图表生成请求过于频繁，请稍后再试"
     )
@@ -280,6 +329,11 @@ public class ChartController {
         String fileSuffix = FileUtil.getSuffix(fileName);
         final List<String> allowedSuffixes = Arrays.asList("xlsx", "xls");
         ThrowUtils.throwIf(!allowedSuffixes.contains(fileSuffix), ErrorCode.PARAMS_ERROR, "文件校验失败");
+
+        // 检查用户任务数量限制
+        if (!chartTaskLimiter.tryAcquire(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "您当前有任务正在执行，请稍后再试");
+        }
 
         // 转换为 CSV
         String csvData = ExcelUtils.excelToCsv(multipartFile);

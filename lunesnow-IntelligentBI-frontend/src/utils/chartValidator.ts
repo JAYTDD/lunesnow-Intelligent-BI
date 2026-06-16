@@ -7,8 +7,8 @@
  * 校验结果
  */
 export interface ValidationResult {
-  valid: boolean
-  error?: string
+  valid: boolean // 是否合法
+  error?: string // 错误信息
 }
 
 /**
@@ -84,7 +84,7 @@ function filterDangerousFields(obj: any): any {
 
   // 处理数组
   if (Array.isArray(obj)) {
-    return obj.map(item => filterDangerousFields(item))
+    return obj.map((item) => filterDangerousFields(item))
   }
 
   // 处理对象
@@ -142,7 +142,7 @@ export function validateEChartsOption(option: any): ValidationResult {
  */
 export function safeRenderChart(
   raw: string | null | undefined,
-  renderFn: (option: any) => void
+  renderFn: (option: any) => void,
 ): { success: boolean; error?: string } {
   // 1. 解析配置
   const option = safeParseChartConfig(raw)
