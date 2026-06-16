@@ -18,8 +18,15 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private ChartWebSocketHandler chartWebSocketHandler;
 
     @Override
+    /**
+     * 注册 WebSocket 处理器
+     *
+     * @param registry WebSocket 处理器注册表
+     */
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(chartWebSocketHandler, "/ws/chart")
+        registry.addHandler(
+                chartWebSocketHandler, // WebSocket 处理器
+                "/ws/chart") // URL 路径
                 .setAllowedOrigins("*");
     }
 }

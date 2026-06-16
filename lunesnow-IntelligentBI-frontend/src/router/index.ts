@@ -36,6 +36,16 @@ const router = createRouter({
           component: () => import('@/views/admin/UserManagePage.vue'),
           meta: { requiresAdmin: true },
         },
+        {
+          path: 'profile',
+          name: 'profile',
+          component: () => import('@/views/user/ProfilePage.vue'),
+        },
+        {
+          path: 'dashboard/editor',
+          name: 'dashboardEditor',
+          component: () => import('@/views/DashboardEditor.vue'),
+        },
       ],
     },
 

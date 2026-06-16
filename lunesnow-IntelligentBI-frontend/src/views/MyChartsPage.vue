@@ -450,39 +450,38 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .page-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
   min-height: calc(100vh - 120px);
-  background: #f5f7fa;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
 }
 
 .page-header {
-  .eyebrow {
-    font-size: 12px;
-    font-weight: 600;
-    color: #10b981;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 4px;
-  }
+  margin-bottom: 24px;
+}
 
-  h2 {
-    font-size: 24px;
-    font-weight: 700;
-    color: #1f2937;
-    margin: 0;
-  }
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #18181b;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.5px;
+}
+
+.page-desc {
+  font-size: 14px;
+  color: #71717a;
+  margin: 0;
 }
 
 .filter-card {
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e4e4e7;
+  margin-bottom: 20px;
 
   :deep(.el-card__body) {
-    padding: 20px;
+    padding: 20px 24px;
   }
 }
 
@@ -497,15 +496,30 @@ onUnmounted(() => {
   }
 
   :deep(.el-form-item__label) {
-    font-weight: 500;
-    color: #374151;
+    font-weight: 600;
+    color: #3f3f46;
+    font-size: 13px;
+  }
+
+  :deep(.el-input__wrapper),
+  :deep(.el-cascader__search-input) {
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px #e4e4e7;
+
+    &:hover {
+      box-shadow: 0 0 0 1px #d4d4d8;
+    }
+
+    &.is-focus {
+      box-shadow: 0 0 0 2px #18181b;
+    }
   }
 }
 
 .table-card {
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e4e4e7;
 
   :deep(.el-card__body) {
     padding: 0;
@@ -523,23 +537,23 @@ onUnmounted(() => {
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  gap: 20px;
   padding: 20px;
 }
 
 .chart-item-card {
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  transition: all 0.2s ease;
+  border-radius: 12px;
+  border: 1px solid #e4e4e7;
+  transition: all 0.2s;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: transparent;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   }
 
   :deep(.el-card__header) {
-    padding: 12px 16px;
-    border-bottom: 1px solid #f3f4f6;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f4f4f5;
   }
 
   :deep(.el-card__body) {
@@ -563,7 +577,7 @@ onUnmounted(() => {
 .chart-name {
   font-size: 14px;
   font-weight: 600;
-  color: #1f2937;
+  color: #18181b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

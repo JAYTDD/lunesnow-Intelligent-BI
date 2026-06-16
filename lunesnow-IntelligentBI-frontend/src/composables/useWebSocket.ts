@@ -28,9 +28,10 @@ export function useWebSocket(url?: string) {
 
   // 构建 WebSocket URL
   const wsUrl = url || (() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const host = window.location.host
-    return `${protocol}//${host}/api/ws/chart?userId=${userId}`
+    const isDev = import.meta.env.DEV
+    const backendHost = isDev ? 'localhost:8088' : window.location.host
+    const protocol = isDev ? 'ws:' : (window.location.protocol === 'https:' ? 'wss:' : 'ws:')
+    return `${protocol}//${backendHost}/api/ws/chart?userId=${userId}`
   })()
 
   let ws: WebSocket | null = null
@@ -59,12 +60,11 @@ export function useWebSocket(url?: string) {
     }
 
     ws.onmessage = (event) => {
+      // 心跳响应忽略
+      if (event.data === 'pong') return
+
       try {
         const data: WebSocketMessage = JSON.parse(event.data)
-
-        // 心跳响应忽略
-        if (data === 'pong') return
-
         console.log('[WebSocket] 收到消息:', data)
         messages.value.push(data)
 

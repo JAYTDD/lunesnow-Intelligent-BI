@@ -29,9 +29,15 @@
 
     <!-- 用户信息 -->
     <div class="user-section">
-      <div class="user-info">
+      <div class="user-info" @click="goToProfile">
         <div class="user-avatar">
-          {{ avatarText }}
+          <img
+            v-if="loginUserStore.loginUser.userAvatar"
+            :src="loginUserStore.loginUser.userAvatar"
+            class="avatar-img"
+            alt="头像"
+          />
+          <span v-else>{{ avatarText }}</span>
         </div>
         <div class="user-detail">
           <span class="user-name">{{ loginUserStore.loginUser.userName || '未登录' }}</span>
@@ -52,7 +58,7 @@ import { ElMessage } from 'element-plus'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import { userLogout } from '@/api/userController'
 import type { Component } from 'vue'
-import { HomeFilled, PieChart, User, SwitchButton } from '@element-plus/icons-vue'
+import { HomeFilled, PieChart, User, SwitchButton, DataBoard } from '@element-plus/icons-vue'
 
 interface MenuItem {
   path: string
@@ -80,6 +86,7 @@ const allItems: MenuItem[] = [
   { path: '/', label: '主页', icon: HomeFilled },
   { path: '/add/chart', label: '添加图表', icon: PieChart },
   { path: '/my/charts', label: '我的图表', icon: PieChart },
+  { path: '/dashboard/editor', label: '仪表盘', icon: DataBoard },
   { path: '/admin/userManage', label: '用户管理', icon: User, adminOnly: true },
 ]
 
@@ -99,6 +106,12 @@ const current = computed(() => route.path)
 const doMenuClick = (path: string) => {
   if (route.path === path) return
   router.push(path).catch(() => {})
+}
+
+// 跳转个人中心
+const goToProfile = () => {
+  if (route.path === '/profile') return
+  router.push('/profile').catch(() => {})
 }
 
 // 退出登录
@@ -221,6 +234,14 @@ const handleLogout = async () => {
   align-items: center;
   gap: 10px;
   min-width: 0;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 10px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f4f4f5;
+  }
 }
 
 .user-avatar {
@@ -235,6 +256,13 @@ const handleLogout = async () => {
   font-size: 13px;
   font-weight: 700;
   flex-shrink: 0;
+  overflow: hidden;
+
+  .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 
 .user-detail {

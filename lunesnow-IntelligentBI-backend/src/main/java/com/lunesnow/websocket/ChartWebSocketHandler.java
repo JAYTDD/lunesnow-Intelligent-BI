@@ -30,14 +30,17 @@ public class ChartWebSocketHandler extends TextWebSocketHandler {
     private static final Map<String, Long> SESSION_USER_MAP = new ConcurrentHashMap<>();
 
     @Override
+    /**
+     * 处理 WebSocket 连接建立事件
+     */
     public void afterConnectionEstablished(WebSocketSession session) {
         // 从 URL 参数获取 userId
         String query = session.getUri() != null ? session.getUri().getQuery() : null;
         Long userId = parseUserId(query);
 
         if (userId != null) {
-            USER_SESSIONS.put(userId, session);
-            SESSION_USER_MAP.put(session.getId(), userId);
+            USER_SESSIONS.put(userId, session); // 存储用户会话信息
+            SESSION_USER_MAP.put(session.getId(), userId);  // 存储会话信息
             log.info("WebSocket 连接建立: userId={}, sessionId={}", userId, session.getId());
         } else {
             log.warn("WebSocket 连接缺少 userId 参数: sessionId={}", session.getId());
@@ -45,6 +48,9 @@ public class ChartWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
+    /**
+     * 处理 WebSocket 连接关闭事件
+     */
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         Long userId = SESSION_USER_MAP.remove(session.getId());
         if (userId != null) {
@@ -53,6 +59,9 @@ public class ChartWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    /**
+     * 处理 WebSocket 文本消息
+     */
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
         // 客户端心跳响应

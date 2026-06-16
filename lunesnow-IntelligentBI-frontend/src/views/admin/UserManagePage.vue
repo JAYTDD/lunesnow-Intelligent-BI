@@ -115,53 +115,73 @@ const handleDelete = async (row: API.UserVO) => {
 
 <style lang="scss" scoped>
 .page-shell {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  min-height: calc(100vh - 120px);
 }
 
 .page-header {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 4px;
+  margin-bottom: 24px;
 }
 
-.eyebrow {
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  color: #8c8c8c;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
-h2 {
+.page-title {
   font-size: 28px;
-  margin: 0;
-  color: #111827;
-  font-weight: 600;
-  letter-spacing: -0.3px;
+  font-weight: 700;
+  color: #18181b;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.5px;
 }
 
-p {
-  margin-top: 8px;
-  color: #6b7280;
+.page-desc {
+  font-size: 14px;
+  color: #71717a;
+  margin: 0;
 }
 
 .table-card {
-  border: 1px solid #eceef2;
+  background: #fff;
   border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  transition: box-shadow 0.2s;
+  border: 1px solid #e4e4e7;
+
+  :deep(.el-card__body) {
+    padding: 0;
+  }
+}
+
+:deep(.el-table) {
+  --el-table-header-bg-color: #fafafa;
+  --el-table-border-color: #f4f4f5;
+
+  th {
+    font-weight: 600;
+    color: #3f3f46;
+    font-size: 13px;
+  }
+
+  td {
+    color: #52525b;
+  }
+}
+
+:deep(.el-button--primary) {
+  background: #18181b;
+  border-color: #18181b;
+  border-radius: 10px;
 
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    background: #27272a;
+    border-color: #27272a;
   }
 }
 
 .pagination {
-  margin-top: 20px;
+  padding: 16px 20px;
   display: flex;
   justify-content: flex-end;
+  border-top: 1px solid #f4f4f5;
 }
 </style>

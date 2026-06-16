@@ -1,63 +1,90 @@
 <template>
   <div class="page-shell">
+    <!-- 页面标题 -->
     <div class="page-header">
-      <div>
-        <div class="eyebrow">Chart</div>
-        <h2>智能图表生成</h2>
+      <div class="header-content">
+        <h1 class="page-title">新建图表</h1>
+        <p class="page-desc">上传 Excel 文件，让 AI 为你生成可视化图表</p>
       </div>
     </div>
 
-    <el-card class="form-section" shadow="never">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="图表名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入图表名称" />
-        </el-form-item>
+    <!-- 表单卡片 -->
+    <div class="form-card">
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
+        <div class="form-grid">
+          <!-- 左侧：基本信息 -->
+          <div class="form-section">
+            <h3 class="section-title">基本信息</h3>
 
-        <el-form-item label="图表类型" prop="chartType">
-          <el-select v-model="form.chartType" placeholder="请选择图表类型" style="width: 100%">
-            <el-option label="折线图" value="折线图" />
-            <el-option label="柱状图" value="柱状图" />
-            <el-option label="饼图" value="饼图" />
-            <el-option label="散点图" value="散点图" />
-            <el-option label="雷达图" value="雷达图" />
-          </el-select>
-        </el-form-item>
+            <div class="form-group">
+              <label class="form-label">图表名称</label>
+              <el-form-item prop="name">
+                <el-input v-model="form.name" placeholder="例如：2024年销售趋势" />
+              </el-form-item>
+            </div>
 
-        <el-form-item label="分析目标" prop="goal">
-          <el-input
-            v-model="form.goal"
-            type="textarea"
-            :rows="3"
-            :maxlength="200"
-            placeholder="请输入分析目标，例如：分析2024年各季度销售额趋势"
-          />
-        </el-form-item>
+            <div class="form-group">
+              <label class="form-label">图表类型</label>
+              <el-form-item prop="chartType">
+                <el-select v-model="form.chartType" placeholder="选择图表类型" style="width: 100%">
+                  <el-option label="折线图" value="折线图" />
+                  <el-option label="柱状图" value="柱状图" />
+                  <el-option label="饼图" value="饼图" />
+                  <el-option label="散点图" value="散点图" />
+                  <el-option label="雷达图" value="雷达图" />
+                </el-select>
+              </el-form-item>
+            </div>
 
-        <el-form-item label="数据文件" prop="file">
-          <el-upload
-            ref="uploadRef"
-            action="#"
-            :auto-upload="false"
-            :on-change="handleFileChange"
-            :on-remove="handleRemove"
-            :limit="1"
-            accept=".xlsx,.xls"
-          >
-            <el-button type="primary">选择 Excel 文件</el-button>
-            <template #tip>
-              <div class="el-upload__tip">请上传 Excel 文件（.xlsx / .xls）</div>
-            </template>
-          </el-upload>
-        </el-form-item>
+            <div class="form-group">
+              <label class="form-label">分析目标</label>
+              <el-form-item prop="goal">
+                <el-input
+                  v-model="form.goal"
+                  type="textarea"
+                  :rows="4"
+                  :maxlength="200"
+                  placeholder="描述你想要分析的内容，例如：分析各季度销售额变化趋势，找出增长最快的品类"
+                />
+              </el-form-item>
+            </div>
+          </div>
 
-        <el-form-item>
+          <!-- 右侧：文件上传 -->
+          <div class="form-section">
+            <h3 class="section-title">数据文件</h3>
+
+            <div class="upload-area">
+              <el-upload
+                ref="uploadRef"
+                action="#"
+                :auto-upload="false"
+                :on-change="handleFileChange"
+                :on-remove="handleRemove"
+                :limit="1"
+                accept=".xlsx,.xls"
+                drag
+              >
+                <div class="upload-content">
+                  <el-icon :size="40" color="#d1d5db"><UploadFilled /></el-icon>
+                  <p class="upload-title">拖拽文件到这里，或点击上传</p>
+                  <p class="upload-hint">支持 .xlsx / .xls 格式，最大 2MB</p>
+                </div>
+              </el-upload>
+            </div>
+          </div>
+        </div>
+
+        <!-- 提交按钮 -->
+        <div class="form-actions">
+          <el-button @click="handleReset">重置</el-button>
           <el-button type="primary" :loading="submitting" @click="handleSubmit">
+            <el-icon v-if="!submitting"><Cpu /></el-icon>
             生成图表
           </el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
+        </div>
       </el-form>
-    </el-card>
+    </div>
   </div>
 </template>
 
@@ -66,39 +93,36 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules, ElMessageBox } from 'element-plus'
 import type { UploadFile } from 'element-plus'
+import { UploadFilled, Cpu } from '@element-plus/icons-vue'
 import myAxios from '@/request'
 
 const router = useRouter()
 
-// 表单实例
 const formRef = ref<FormInstance>()
-// 上传组件实例
 const uploadRef = ref()
 const submitting = ref(false)
-// 表单数据
+
 const form = reactive<API.getChartByAIParams>({
-  name: '111',
-  chartType: '折线图',
-  goal: '分析用户增长情况',
+  name: '',
+  chartType: '',
+  goal: '',
 })
 
-// 选中的文件
 const selectedFile = ref<File | null>(null)
-// 表单验证规则
+
 const rules: FormRules = {
   name: [{ required: true, message: '请输入图表名称', trigger: 'blur' }],
   chartType: [{ required: true, message: '请选择图表类型', trigger: 'change' }],
   goal: [{ required: true, message: '请输入分析目标', trigger: 'blur' }],
 }
 
-// 处理文件上传
 const ALLOWED_TYPES = ['.xlsx', '.xls']
 const MAX_SIZE = 2 * 1024 * 1024
+
 const handleFileChange = (uploadFile: UploadFile) => {
   const file = uploadFile.raw
   if (!file) return
 
-  // 后缀校验
   const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
   if (!ALLOWED_TYPES.includes(ext)) {
     ElMessage.error('仅支持 .xlsx / .xls 格式')
@@ -106,17 +130,15 @@ const handleFileChange = (uploadFile: UploadFile) => {
     return
   }
 
-  // 大小校验
   if (file.size > MAX_SIZE) {
-    ElMessage.error('文件大小不能超过 10MB')
+    ElMessage.error('文件大小不能超过 2MB')
     uploadRef.value?.clearFiles()
     return
   }
-  // 保存选中的文件
+
   selectedFile.value = uploadFile.raw || null
 }
 
-// 处理文件删除
 const handleRemove = () => {
   ElMessageBox.confirm('确认删除选中的文件吗？', '提示', {
     confirmButtonText: '确定',
@@ -127,7 +149,6 @@ const handleRemove = () => {
   })
 }
 
-// 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
@@ -141,19 +162,18 @@ const handleSubmit = async () => {
     submitting.value = true
 
     try {
-      // 构建 multipart/form-data
       const formDataFile = new FormData()
       formDataFile.append('file', selectedFile.value)
       formDataFile.append('name', form.name)
       formDataFile.append('chartType', form.chartType)
       formDataFile.append('goal', form.goal)
-      // 这里openapi接口不匹配，需要手动处理返回数据
+
       const res = await myAxios('/chart/gen', {
         method: 'POST',
         data: formDataFile,
       })
       if (res.code === 0) {
-        ElMessage.success('图表已提交，正在生成中，可以前往我的图表查看生成进度')
+        ElMessage.success('图表已提交，正在生成中')
         router.push('/my/charts')
       }
     } catch (error: unknown) {
@@ -164,7 +184,6 @@ const handleSubmit = async () => {
   })
 }
 
-// 重置表单
 const handleReset = () => {
   form.name = ''
   form.chartType = ''
@@ -177,195 +196,159 @@ const handleReset = () => {
 
 <style lang="scss" scoped>
 .page-shell {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 24px;
   min-height: calc(100vh - 120px);
-  background:
-    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(16, 185, 129, 0.05) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 85% 80%, rgba(245, 158, 11, 0.04) 0%, transparent 55%),
-    #f5f6f8;
-  border-radius: 20px;
-  padding: 24px 40px 32px;
-  display: grid;
-  gap: 24px;
 }
 
 .page-header {
-  .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    color: #10b981;
-    text-transform: uppercase;
-    margin-bottom: 4px;
+  margin-bottom: 32px;
+}
 
-    &::before {
-      content: '';
-      width: 18px;
-      height: 2px;
-      background: #10b981;
-      border-radius: 1px;
-    }
-  }
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #18181b;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.5px;
+}
 
-  h2 {
-    font-size: 26px;
-    font-weight: 800;
-    margin: 0;
-    color: #1a1a2e;
-    letter-spacing: -0.03em;
-    line-height: 1.2;
-  }
+.page-desc {
+  font-size: 14px;
+  color: #71717a;
+  margin: 0;
+}
+
+.form-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e4e4e7;
+  padding: 32px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
 }
 
 .form-section {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 0;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 4px 16px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-  transition: box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #18181b;
+    margin: 0 0 24px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f4f4f5;
+  }
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3f3f46;
+  margin-bottom: 8px;
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-textarea__inner) {
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px #e4e4e7;
+  transition: box-shadow 0.2s;
 
   &:hover {
-    box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.04),
-      0 8px 32px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 0 0 1px #d4d4d8;
   }
 
-  :deep(.el-card__body) {
-    padding: 24px 28px 20px;
+  &.is-focus {
+    box-shadow: 0 0 0 2px #18181b;
   }
+}
 
-  :deep(.el-form-item) {
-    margin-bottom: 18px;
-  }
+:deep(.el-textarea__inner) {
+  resize: none;
+}
 
-  :deep(.el-form-item__label) {
-    font-weight: 600;
-    color: #4b5563;
-    font-size: 13px;
-    padding-bottom: 4px !important;
-  }
-
-  :deep(.el-input__wrapper),
-  :deep(.el-textarea__inner) {
-    background: #fafbfc;
-    border: 1.5px solid #f0f0f0;
-    border-radius: 14px;
-    box-shadow: none !important;
-    transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-
-    &:hover {
-      border-color: #d1d5db;
-      background: #ffffff;
-    }
-  }
-
-  :deep(.el-input__wrapper.is-focus),
-  :deep(.el-textarea__inner:focus) {
-    border-color: #10b981;
-    background: #ffffff;
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12) !important;
-  }
-
-  :deep(.el-select) {
-    width: 100%;
-  }
-
-  :deep(.el-textarea__inner) {
-    resize: none;
-  }
-
+.upload-area {
   :deep(.el-upload) {
     width: 100%;
 
-    .el-button {
+    .el-upload-dragger {
       width: 100%;
-      height: 44px;
-      border-radius: 14px;
-      font-weight: 600;
-      font-size: 14px;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      border: none;
-      transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      height: 200px;
+      border-radius: 12px;
+      border: 2px dashed #e4e4e7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
 
       &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
-      }
-
-      &:active {
-        transform: translateY(0);
-      }
-    }
-  }
-
-  :deep(.el-upload__tip) {
-    color: #9ca3af;
-    font-size: 12px;
-    margin-top: 10px;
-    text-align: center;
-  }
-
-  :deep(.el-form-item:last-child) {
-    margin-bottom: 0;
-    margin-top: 12px;
-    padding-top: 20px;
-    border-top: 1px solid #f0f0f0;
-
-    .el-form-item__content {
-      gap: 12px;
-    }
-
-    .el-button--primary {
-      height: 44px;
-      padding: 0 32px;
-      border-radius: 14px;
-      font-weight: 700;
-      font-size: 15px;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      border: none;
-      letter-spacing: 0.04em;
-      transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-
-      &:not(.is-loading):hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
-      }
-
-      &.is-loading {
-        animation: pulse-ring 1.5s ease-in-out infinite;
-      }
-    }
-
-    .el-button:not(.el-button--primary) {
-      height: 44px;
-      padding: 0 24px;
-      border-radius: 14px;
-      font-weight: 600;
-      color: #4b5563;
-      border: 1.5px solid #e5e7eb;
-      background: transparent;
-      transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-
-      &:hover {
-        border-color: #d1d5db;
-        background: #f9fafb;
+        border-color: #18181b;
+        background: #fafafa;
       }
     }
   }
 }
 
-@keyframes pulse-ring {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+.upload-content {
+  text-align: center;
+
+  .upload-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #3f3f46;
+    margin: 12px 0 4px;
   }
-  50% {
-    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+
+  .upload-hint {
+    font-size: 12px;
+    color: #a1a1aa;
+    margin: 0;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #f4f4f5;
+
+  :deep(.el-button) {
+    height: 42px;
+    padding: 0 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  :deep(.el-button--primary) {
+    background: #18181b;
+    border-color: #18181b;
+
+    &:hover {
+      background: #27272a;
+      border-color: #27272a;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .page-shell {
+    padding: 24px 16px;
   }
 }
 </style>

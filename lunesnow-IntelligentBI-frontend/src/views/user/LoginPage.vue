@@ -1,51 +1,88 @@
 <template>
   <div class="auth-page">
     <div class="auth-card">
-      <div class="auth-copy">
-        <div class="eyebrow">智能 BI 系统</div>
-        <h1>数据驱动决策</h1>
-        <p>上传 Excel，AI 自动生成 ECharts 可视化图表。让数据说话，用图表讲述业务故事。</p>
+      <!-- 左侧品牌区 -->
+      <div class="auth-brand">
+        <div class="brand-content">
+          <div class="brand-logo">
+            <svg width="40" height="40" viewBox="0 0 28 28" fill="none">
+              <rect width="28" height="28" rx="8" fill="#18181b"/>
+              <path d="M8 18V12M12 18V10M16 18V14M20 18V8" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="brand-label">Intelligent BI</div>
+        </div>
+        <h1 class="brand-title">数据驱动<br/>每一个决策</h1>
+        <p class="brand-desc">上传 Excel，AI 自动生成 ECharts 可视化图表。<br/>让数据说话，用图表讲述业务故事。</p>
+        <div class="brand-features">
+          <div class="feature-item">
+            <span class="feature-dot"></span>
+            <span>智能图表生成</span>
+          </div>
+          <div class="feature-item">
+            <span class="feature-dot"></span>
+            <span>实时数据预览</span>
+          </div>
+          <div class="feature-item">
+            <span class="feature-dot"></span>
+            <span>一键导出分享</span>
+          </div>
+        </div>
       </div>
 
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        class="auth-form"
-        @keyup.enter="handleLogin"
-      >
-        <div class="form-title">账户密码登录</div>
-        <el-form-item prop="userAccount">
-          <el-input
-            v-model="form.userAccount"
-            placeholder="请输入账号"
-            size="large"
-            :prefix-icon="User"
-          />
-        </el-form-item>
-        <el-form-item prop="userPassword">
-          <el-input
-            v-model="form.userPassword"
-            type="password"
-            placeholder="请输入密码"
-            size="large"
-            :prefix-icon="Lock"
-            show-password
-          />
-        </el-form-item>
-        <div class="auth-links">
-          <router-link to="/user/register">新用户注册</router-link>
-        </div>
-        <el-button
-          type="primary"
-          size="large"
-          class="action-btn"
-          :loading="loading"
-          @click="handleLogin"
+      <!-- 右侧表单区 -->
+      <div class="auth-form-wrapper">
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          class="auth-form"
+          @keyup.enter="handleLogin"
         >
-          登录
-        </el-button>
-      </el-form>
+          <h2 class="form-title">欢迎回来</h2>
+          <p class="form-subtitle">登录你的账户以继续</p>
+
+          <div class="form-group">
+            <label class="form-label">账号</label>
+            <el-form-item prop="userAccount">
+              <el-input
+                v-model="form.userAccount"
+                placeholder="请输入账号"
+                size="large"
+                :prefix-icon="User"
+              />
+            </el-form-item>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">密码</label>
+            <el-form-item prop="userPassword">
+              <el-input
+                v-model="form.userPassword"
+                type="password"
+                placeholder="请输入密码"
+                size="large"
+                :prefix-icon="Lock"
+                show-password
+              />
+            </el-form-item>
+          </div>
+
+          <div class="form-footer">
+            <router-link to="/user/register" class="form-link">注册新账户</router-link>
+          </div>
+
+          <el-button
+            type="primary"
+            size="large"
+            class="submit-btn"
+            :loading="loading"
+            @click="handleLogin"
+          >
+            登录
+          </el-button>
+        </el-form>
+      </div>
     </div>
   </div>
 </template>
@@ -107,95 +144,186 @@ const handleLogin = async () => {
 <style lang="scss" scoped>
 .auth-page {
   display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 100vh;
   padding: 24px;
-  background: linear-gradient(180deg, #f6f8fb 0%, #eef2f7 100%);
+  background: #fafafa;
 }
 
 .auth-card {
-  width: min(1040px, 100%);
-  margin: auto;
-  display: flex;
-  gap: 32px;
-  align-items: stretch;
-  padding: 28px;
-  border: 1px solid #eceef2;
-  border-radius: 24px;
+  width: 100%;
+  max-width: 960px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   background: #fff;
-  box-shadow: 0 20px 60px rgba(17, 24, 39, 0.08);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 20px 60px rgba(0, 0, 0, 0.06);
 }
 
-.auth-copy {
-  flex: 1;
-  padding: 24px;
-  background: linear-gradient(180deg, #fafafa 0%, #fff 100%);
-  border-radius: 18px;
+/* 左侧品牌区 */
+.auth-brand {
+  padding: 48px 40px;
+  background: #18181b;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
 }
 
-.eyebrow {
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #8c8c8c;
-  margin-bottom: 14px;
+.brand-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 48px;
 }
 
-h1 {
-  font-size: 42px;
-  line-height: 1.1;
-  margin: 0 0 14px;
-  color: #111827;
+.brand-logo svg {
+  width: 32px;
+  height: 32px;
 }
 
-p {
-  max-width: 420px;
-  color: #6b7280;
-  line-height: 1.8;
+.brand-label {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.brand-title {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.5px;
+}
+
+.brand-desc {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 40px 0;
+}
+
+.brand-features {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.feature-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+/* 右侧表单区 */
+.auth-form-wrapper {
+  padding: 48px 40px;
+  display: flex;
+  align-items: center;
 }
 
 .auth-form {
-  width: min(380px, 100%);
-  align-self: center;
-  padding: 12px 0;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
 }
 
 .form-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
+  font-size: 24px;
+  font-weight: 700;
+  color: #18181b;
+  margin: 0 0 6px 0;
+}
+
+.form-subtitle {
+  font-size: 14px;
+  color: #71717a;
+  margin: 0 0 32px 0;
+}
+
+.form-group {
   margin-bottom: 20px;
 }
 
-.auth-links {
-  display: flex;
-  justify-content: flex-end;
-  margin: 2px 0 20px;
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3f3f46;
+  margin-bottom: 8px;
 }
 
-.auth-links a {
-  color: #5f6368;
+:deep(.el-input__wrapper) {
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px #e4e4e7;
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 0 0 1px #d4d4d8;
+  }
+
+  &.is-focus {
+    box-shadow: 0 0 0 2px #18181b;
+  }
+}
+
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 24px;
+}
+
+.form-link {
+  font-size: 13px;
+  color: #71717a;
   text-decoration: none;
-  font-size: 14px;
   transition: color 0.2s;
 
   &:hover {
-    color: #409eff;
+    color: #18181b;
   }
 }
 
-.action-btn {
+.submit-btn {
   width: 100%;
+  height: 44px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.3px;
+  background: #18181b;
+  border-color: #18181b;
+  border-radius: 10px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #27272a;
+    border-color: #27272a;
+  }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .auth-card {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    max-width: 420px;
   }
 
-  h1 {
-    font-size: 32px;
+  .auth-brand {
+    display: none;
+  }
+
+  .auth-form-wrapper {
+    padding: 40px 24px;
   }
 }
 </style>
