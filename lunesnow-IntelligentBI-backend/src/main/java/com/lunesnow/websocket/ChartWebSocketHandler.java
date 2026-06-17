@@ -38,13 +38,20 @@ public class ChartWebSocketHandler extends TextWebSocketHandler {
         String query = session.getUri() != null ? session.getUri().getQuery() : null;
         Long userId = parseUserId(query);
 
-        if (userId != null) {
-            USER_SESSIONS.put(userId, session); // 存储用户会话信息
-            SESSION_USER_MAP.put(session.getId(), userId);  // 存储会话信息
-            log.info("WebSocket 连接建立: userId={}, sessionId={}", userId, session.getId());
-        } else {
-            log.warn("WebSocket 连接缺少 userId 参数: sessionId={}", session.getId());
+        if (userId == null || userId <= 0) {
+            // 无效的 userId，拒绝连接
+            log.warn("WebSocket 连接被拒绝: 无效的 userId 参数, sessionId={}", session.getId());
+            try {
+                session.close(CloseStatus.POLICY_VIOLATION.withReason("Invalid userId"));
+            } catch (IOException e) {
+                log.error("关闭无效 WebSocket 连接失败", e);
+            }
+            return;
         }
+
+        USER_SESSIONS.put(userId, session); // 存储用户会话信息
+        SESSION_USER_MAP.put(session.getId(), userId);  // 存储会话信息
+        log.info("WebSocket 连接建立: userId={}, sessionId={}", userId, session.getId());
     }
 
     @Override

@@ -34,4 +34,22 @@ public interface ChartDataService {
      * @return 数据列表（每行是一个 Map，key为列名，value为列值）
      */
     List<Map<String, String>> getTableData(Long chartId);
+
+    /**
+     * 查询动态表数据（支持筛选）
+     *
+     * @param chartId 图表ID
+     * @param filters 筛选条件，key为列名，value为筛选值（模糊匹配）
+     * @return 数据列表
+     */
+    List<Map<String, String>> getTableDataWithFilter(Long chartId, Map<String, String> filters);
+
+    /**
+     * 获取某列的唯一值（用于筛选下拉选项）
+     *
+     * @param chartId 图表ID
+     * @param columnName 列名
+     * @return 该列的所有唯一值
+     */
+    List<String> getColumnDistinctValues(Long chartId, String columnName);
 }

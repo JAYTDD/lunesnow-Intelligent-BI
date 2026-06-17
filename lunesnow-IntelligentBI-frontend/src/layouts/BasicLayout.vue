@@ -5,7 +5,11 @@
         <GlobalSider :connected="wsConnected" />
       </el-aside>
       <el-main class="content">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <transition name="page-fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </el-main>
     </el-container>
   </div>
@@ -35,13 +39,24 @@ const { connected: wsConnected } = useWebSocket()
   height: 100vh;
   overflow-y: auto;
   background: #fff;
-  border-right: 1px solid #e4e4e7;
+  border-right: 1px solid #f4f4f5;
 }
 
 .content {
   flex: 1;
   padding: 0;
   overflow-y: auto;
+}
+
+/* 页面过渡动画 */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
 }
 
 @media (max-width: 768px) {

@@ -148,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -251,6 +251,18 @@ const loadStatistics = async () => {
 
 onMounted(() => {
   loadStatistics()
+})
+
+onUnmounted(() => {
+  // Dispose all ECharts instances attached to mini-chart DOM elements
+  recentCharts.value.forEach((chart) => {
+    if (chart.status !== 'succeed') return
+    const chartDom = document.getElementById(`recent-chart-${chart.id}`)
+    if (chartDom) {
+      const instance = echarts.getInstanceByDom(chartDom)
+      if (instance) instance.dispose()
+    }
+  })
 })
 </script>
 

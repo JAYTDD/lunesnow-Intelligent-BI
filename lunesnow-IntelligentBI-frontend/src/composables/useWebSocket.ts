@@ -27,12 +27,14 @@ export function useWebSocket(url?: string) {
   const userId = loginUserStore.loginUser.id
 
   // 构建 WebSocket URL
-  const wsUrl = url || (() => {
-    const isDev = import.meta.env.DEV
-    const backendHost = isDev ? 'localhost:8088' : window.location.host
-    const protocol = isDev ? 'ws:' : (window.location.protocol === 'https:' ? 'wss:' : 'ws:')
-    return `${protocol}//${backendHost}/api/ws/chart?userId=${userId}`
-  })()
+  const wsUrl =
+    url ||
+    (() => {
+      const isDev = import.meta.env.DEV
+      const backendHost = isDev ? 'localhost:8088' : window.location.host
+      const protocol = isDev ? 'ws:' : window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      return `${protocol}//${backendHost}/api/ws/chart?userId=${userId}`
+    })()
 
   let ws: WebSocket | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
@@ -92,6 +94,7 @@ export function useWebSocket(url?: string) {
 
       // 非主动关闭 → 尝试重连
       if (event.code !== 1000 && reconnectCount < maxReconnect) {
+        // 指数退避
         const delay = Math.min(1000 * Math.pow(2, reconnectCount), 30000)
         console.log(`[WebSocket] ${delay}ms 后重连 (${reconnectCount + 1}/${maxReconnect})`)
         reconnectTimer = setTimeout(() => {

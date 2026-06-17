@@ -18,14 +18,18 @@
     </div>
 
     <!-- 菜单 -->
-    <el-menu v-if="loginUserStore.loginUser?.id" :default-active="current" @select="doMenuClick">
-      <el-menu-item v-for="item in menuItems" :key="item.path" :index="item.path">
-        <el-icon v-if="item.icon">
-          <component :is="item.icon" />
-        </el-icon>
+    <nav class="nav-menu" v-if="loginUserStore.loginUser?.id">
+      <button
+        v-for="item in menuItems"
+        :key="item.path"
+        class="nav-item"
+        :class="{ 'nav-item--active': current === item.path }"
+        @click="doMenuClick(item.path)"
+      >
+        <el-icon :size="18"><component :is="item.icon" /></el-icon>
         <span>{{ item.label }}</span>
-      </el-menu-item>
-    </el-menu>
+      </button>
+    </nav>
 
     <!-- 用户信息 -->
     <div class="user-section">
@@ -58,7 +62,7 @@ import { ElMessage } from 'element-plus'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import { userLogout } from '@/api/userController'
 import type { Component } from 'vue'
-import { HomeFilled, PieChart, User, SwitchButton, DataBoard } from '@element-plus/icons-vue'
+import { HomeFilled, PieChart, User, SwitchButton, DataBoard, Lock, Plus } from '@element-plus/icons-vue'
 
 interface MenuItem {
   path: string
@@ -84,10 +88,11 @@ const avatarText = computed(() => {
 // 菜单项定义
 const allItems: MenuItem[] = [
   { path: '/', label: '主页', icon: HomeFilled },
-  { path: '/add/chart', label: '添加图表', icon: PieChart },
+  { path: '/add/chart', label: '添加图表', icon: Plus },
   { path: '/my/charts', label: '我的图表', icon: PieChart },
   { path: '/dashboard/editor', label: '仪表盘', icon: DataBoard },
   { path: '/admin/userManage', label: '用户管理', icon: User, adminOnly: true },
+  { path: '/admin/rateLimit', label: '限流管理', icon: Lock, adminOnly: true },
 ]
 
 // 按权限过滤
@@ -133,6 +138,7 @@ const handleLogout = async () => {
   flex-direction: column;
   height: 100%;
   padding: 20px 12px;
+  background: #fff;
 }
 
 /* 品牌区 */
@@ -141,7 +147,7 @@ const handleLogout = async () => {
   align-items: center;
   gap: 12px;
   padding: 4px 8px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .brand-logo {
@@ -163,7 +169,7 @@ const handleLogout = async () => {
 .brand-sub {
   font-size: 11px;
   color: #a1a1aa;
-  margin-top: 1px;
+  margin-top: 2px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -177,45 +183,56 @@ const handleLogout = async () => {
   transition: background 0.3s;
 
   &.ws-online {
-    background: #22c55e;
-    animation: pulse-ws 2s ease-in-out infinite;
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
   }
 }
 
-@keyframes pulse-ws {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-/* 菜单 */
-:deep(.el-menu) {
-  border-right: none;
+/* 导航菜单 */
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   flex: 1;
 }
 
-:deep(.el-menu-item) {
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 500;
   color: #71717a;
-  height: 42px;
-  line-height: 42px;
-  margin: 2px 0;
-  border-radius: 10px;
-  transition: all 0.2s;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  width: 100%;
 
   &:hover {
     color: #18181b;
     background: #f4f4f5;
   }
 
-  &.is-active {
+  &--active {
     color: #18181b;
     background: #f4f4f5;
     font-weight: 600;
-  }
 
-  .el-icon {
-    font-size: 17px;
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 16px;
+      background: #18181b;
+      border-radius: 0 2px 2px 0;
+    }
   }
 }
 
@@ -226,7 +243,7 @@ const handleLogout = async () => {
   justify-content: space-between;
   padding: 12px 8px;
   margin-top: auto;
-  border-top: 1px solid #e4e4e7;
+  border-top: 1px solid #f4f4f5;
 }
 
 .user-info {
@@ -248,7 +265,7 @@ const handleLogout = async () => {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: #18181b;
+  background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
   color: #fff;
   display: flex;
   align-items: center;
@@ -300,8 +317,8 @@ const handleLogout = async () => {
   flex-shrink: 0;
 
   &:hover {
-    background: #f4f4f5;
-    color: #18181b;
+    background: #fef2f2;
+    color: #ef4444;
   }
 }
 </style>

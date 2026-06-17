@@ -1,11 +1,14 @@
 <template>
   <div class="page-shell">
     <div class="page-header">
-      <div>
-        <div class="eyebrow">Admin</div>
-        <h2>用户管理</h2>
+      <div class="header-content">
+        <h1 class="page-title">用户管理</h1>
+        <p class="page-desc">管理系统中的所有用户账户</p>
       </div>
-      <el-button type="primary" @click="handleAdd">新建</el-button>
+      <el-button type="primary" @click="handleAdd">
+        <el-icon><Plus /></el-icon>
+        新建用户
+      </el-button>
     </div>
 
     <el-card class="table-card" shadow="never">
@@ -22,15 +25,16 @@
         <el-table-column prop="userAccount" label="账号" width="180" />
         <el-table-column prop="userRole" label="角色" width="120">
           <template #default="{ row }">
-            <el-tag :type="row.userRole === 'admin' ? 'danger' : 'info'">
+            <el-tag :type="row.userRole === 'admin' ? 'danger' : 'info'" size="small">
               {{ row.userRole === 'admin' ? '管理员' : '用户' }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" />
-        <el-table-column label="操作" width="160">
+        <el-table-column label="操作" width="200">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-button link type="success" size="small" @click="handleViewCharts(row)">图表</el-button>
             <el-button link type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -52,8 +56,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
+import { Plus } from '@element-plus/icons-vue'
 import { listUserVoByPage, deleteUser } from '@/api/userController'
 import UserFormDialog from '@/components/UserFormDialog.vue'
+
+const router = useRouter()
 
 const tableData = ref<API.UserVO[]>([])
 const currentPage = ref(1)
@@ -111,6 +119,10 @@ const handleDelete = async (row: API.UserVO) => {
     }
   }
 }
+
+const handleViewCharts = (row: API.UserVO) => {
+  router.push(`/admin/userCharts/${row.id}`)
+}
 </script>
 
 <style lang="scss" scoped>
@@ -125,14 +137,20 @@ const handleDelete = async (row: API.UserVO) => {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .page-title {
   font-size: 28px;
   font-weight: 700;
   color: #18181b;
-  margin: 0 0 6px 0;
+  margin: 0;
   letter-spacing: -0.5px;
 }
 
@@ -159,22 +177,14 @@ const handleDelete = async (row: API.UserVO) => {
   th {
     font-weight: 600;
     color: #3f3f46;
-    font-size: 13px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   td {
     color: #52525b;
-  }
-}
-
-:deep(.el-button--primary) {
-  background: #18181b;
-  border-color: #18181b;
-  border-radius: 10px;
-
-  &:hover {
-    background: #27272a;
-    border-color: #27272a;
+    font-size: 13px;
   }
 }
 

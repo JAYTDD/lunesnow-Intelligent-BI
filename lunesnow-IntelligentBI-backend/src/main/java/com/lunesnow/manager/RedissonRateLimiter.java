@@ -8,8 +8,12 @@ import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 基于 Redisson 的分布式限流管理器
@@ -73,16 +77,17 @@ public class RedissonRateLimiter {
      */
     public Map<String, Object> getStatus(String key) {
         Map<String, Object> status = new HashMap<>();
+        status.put("key", key);
         try {
             RRateLimiter rateLimiter = redissonClient.getRateLimiter(key);
-            status.put("key", key);
-            status.put("availableTokens", rateLimiter.availablePermits());
+            // availablePermits 会触发 Lua 脚本，如果限流器未初始化会抛异常
+            long tokens = rateLimiter.availablePermits();
             status.put("exists", true);
+            status.put("availableTokens", tokens);
         } catch (Exception e) {
-            log.error("获取限流状态失败: key={}", key, e);
-            status.put("key", key);
+            // 限流器未初始化或 key 不存在，都视为不存在
             status.put("exists", false);
-            status.put("error", e.getMessage());
+            status.put("availableTokens", 0);
         }
         return status;
     }
@@ -99,6 +104,70 @@ public class RedissonRateLimiter {
             log.info("限流器已重置: key={}", key);
         } catch (Exception e) {
             log.error("重置限流器失败: key={}", key, e);
+        }
+    }
+
+    /**
+     * 获取所有限流状态
+     *
+     * @return 所有限流器的状态列表
+     */
+    public List<Map<String, Object>> listAll() {
+        List<Map<String, Object>> list = new ArrayList<>();
+        try {
+            // 扫描所有 rate_limit: 开头的 key
+            Iterable<String> keysIterable = redissonClient.getKeys().getKeysByPattern(RATE_LIMIT_PREFIX + "*");
+            Set<String> keys = new HashSet<>();
+            keysIterable.forEach(keys::add);
+            log.info("扫描到 {} 个限流相关 key", keys.size());
+            for (String key : keys) {
+                // 只处理主 key（不包含 :value 和 :permits 的）
+                if (key.contains(":value") || key.contains(":permits")) {
+                    continue;
+                }
+                try {
+                    RRateLimiter rateLimiter = redissonClient.getRateLimiter(key);
+                    long tokens = rateLimiter.availablePermits();
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("key", key);
+                    // 提取类型和标识
+                    String displayKey = key.replace(RATE_LIMIT_PREFIX, "");
+                    item.put("type", displayKey.split(":")[0]);
+                    item.put("identifier", displayKey.split(":").length > 1 ? displayKey.split(":")[1] : "");
+                    item.put("availableTokens", tokens);
+                    item.put("exists", true);
+                    list.add(item);
+                } catch (Exception e) {
+                    log.warn("读取限流 key 失败: {}", key, e);
+                }
+            }
+        } catch (Exception e) {
+            log.error("获取所有限流状态失败", e);
+        }
+        return list;
+    }
+
+    /**
+     * 重置所有限流器
+     */
+    public void resetAll() {
+        try {
+            Iterable<String> keysIterable = redissonClient.getKeys().getKeysByPattern(RATE_LIMIT_PREFIX + "*");
+            Set<String> keys = new HashSet<>();
+            keysIterable.forEach(keys::add);
+            int count = 0;
+            for (String key : keys) {
+                try {
+                    RRateLimiter rateLimiter = redissonClient.getRateLimiter(key);
+                    rateLimiter.delete();
+                    count++;
+                } catch (Exception e) {
+                    // 跳过无法删除的 key
+                }
+            }
+            log.info("批量重置限流器完成，共删除 {} 个", count);
+        } catch (Exception e) {
+            log.error("批量重置限流器失败", e);
         }
     }
 

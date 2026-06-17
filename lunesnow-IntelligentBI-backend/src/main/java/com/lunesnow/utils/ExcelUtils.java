@@ -25,6 +25,26 @@ public class ExcelUtils {
 
     public static String excelToCsv(MultipartFile multipartFile) throws IOException {
 
+        String fileName = multipartFile.getOriginalFilename();
+        boolean isCsv = fileName != null && fileName.toLowerCase().endsWith(".csv");
+
+        // CSV 文件直接读取返回
+        if (isCsv) {
+            try {
+                String content = new String(multipartFile.getBytes(), "UTF-8");
+                if (content.trim().isEmpty()) {
+                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "CSV 文件内容为空，请检查文件");
+                }
+                return content;
+            } catch (BusinessException e) {
+                throw e;
+            } catch (IOException e) {
+                log.error("读取 CSV 文件失败: {}", e.getMessage(), e);
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "CSV 文件读取失败，请确认文件编码为 UTF-8");
+            }
+        }
+
+        // Excel 文件使用 EasyExcel 解析
         List<Map<Integer, String>> data = null;
         try {
             data = EasyExcel.read(multipartFile.getInputStream())
@@ -32,9 +52,14 @@ public class ExcelUtils {
                     .sheet()
                     .headRowNumber(0)
                     .doReadSync();
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("读取 Excel 文件失败: {}", e.getMessage(), e);
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Excel 文件读取失败");
+            // 区分不同错误类型
+            String msg = e.getMessage();
+            if (msg != null && msg.contains("not a valid OOXML")) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件格式损坏或不是有效的 Excel 文件");
+            }
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Excel 文件读取失败，请确认文件格式正确");
         }
         //判断数据是否为空
         if (data == null || data.isEmpty()) {

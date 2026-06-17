@@ -228,8 +228,8 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -237,14 +237,14 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #e4e7ed;
+  padding: 10px 14px;
+  background: #fafafa;
+  border-bottom: 1px solid #f4f4f5;
 
   .panel-title {
     font-size: 13px;
     font-weight: 600;
-    color: #606266;
+    color: #3f3f46;
   }
 }
 
@@ -258,16 +258,16 @@ onUnmounted(() => {
     border: none;
     outline: none;
     resize: none;
-    padding: 12px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    padding: 14px;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
     font-size: 13px;
     line-height: 1.6;
-    background: #1e1e1e;
-    color: #d4d4d4;
+    background: #18181b;
+    color: #e4e4e7;
     tab-size: 2;
 
     &::placeholder {
-      color: #666;
+      color: #52525b;
     }
   }
 }

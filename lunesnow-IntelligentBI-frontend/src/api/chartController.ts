@@ -87,6 +87,39 @@ export async function getChartData(
   })
 }
 
+/** 此处后端没有提供注释 GET /chart/get/data/${param0}/column/${param1} */
+export async function getColumnDistinctValues(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getColumnDistinctValuesParams,
+  options?: { [key: string]: any }
+) {
+  const { chartId: param0, columnName: param1, ...queryParams } = params
+  return request<API.BaseResponseListString>(`/chart/get/data/${param0}/column/${param1}`, {
+    method: 'GET',
+    params: { ...queryParams },
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /chart/get/data/${param0}/filter */
+export async function getChartDataWithFilter(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getChartDataWithFilterParams,
+  body: Record<string, any>,
+  options?: { [key: string]: any }
+) {
+  const { chartId: param0, ...queryParams } = params
+  return request<API.BaseResponseListMapStringString>(`/chart/get/data/${param0}/filter`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    params: { ...queryParams },
+    data: body,
+    ...(options || {}),
+  })
+}
+
 /** 此处后端没有提供注释 GET /chart/get/vo */
 export async function getChartVoById(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)

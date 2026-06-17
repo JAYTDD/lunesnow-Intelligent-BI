@@ -30,4 +30,12 @@ public class PageRequest {
      * 排序顺序（默认升序）
      */
     private String sortOrder = CommonConstant.SORT_ORDER_ASC;
+
+    public int getCurrent() {
+        return Math.max(current, 1);
+    }
+
+    public int getPageSize() {
+        return Math.min(Math.max(pageSize, 1), 100);
+    }
 }
