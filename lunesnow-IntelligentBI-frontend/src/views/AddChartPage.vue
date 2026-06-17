@@ -4,7 +4,7 @@
     <div class="page-header">
       <div class="header-content">
         <h1 class="page-title">新建图表</h1>
-        <p class="page-desc">上传 Excel 文件，让 AI 为你生成可视化图表</p>
+        <p class="page-desc">上传 Excel/CSV 文件，让 AI 为你生成可视化图表</p>
       </div>
     </div>
 
@@ -62,13 +62,13 @@
                 :on-change="handleFileChange"
                 :on-remove="handleRemove"
                 :limit="1"
-                accept=".xlsx,.xls"
+                accept=".xlsx,.xls,.csv"
                 drag
               >
                 <div class="upload-content">
                   <el-icon :size="40" color="#d1d5db"><UploadFilled /></el-icon>
                   <p class="upload-title">拖拽文件到这里，或点击上传</p>
-                  <p class="upload-hint">支持 .xlsx / .xls 格式，最大 2MB</p>
+                  <p class="upload-hint">支持 .xlsx / .xls / .csv 格式，最大 2MB</p>
                 </div>
               </el-upload>
             </div>
@@ -116,7 +116,13 @@ const rules: FormRules = {
   goal: [{ required: true, message: '请输入分析目标', trigger: 'blur' }],
 }
 
-const ALLOWED_TYPES = ['.xlsx', '.xls']
+const ALLOWED_TYPES = ['.xlsx', '.xls', '.csv']
+const ALLOWED_MIME = [
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-excel', // .xls
+  'text/csv', // .csv
+  'application/csv', // .csv
+]
 const MAX_SIZE = 2 * 1024 * 1024
 
 const handleFileChange = (uploadFile: UploadFile) => {
@@ -124,14 +130,30 @@ const handleFileChange = (uploadFile: UploadFile) => {
   if (!file) return
 
   const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
+
+  // 1. 后缀名校验
   if (!ALLOWED_TYPES.includes(ext)) {
-    ElMessage.error('仅支持 .xlsx / .xls 格式')
+    ElMessage.error(`文件格式不支持，仅允许 ${ALLOWED_TYPES.join('、')} 格式`)
+    uploadRef.value?.clearFiles()
+    return
+  }
+
+  // 2. MIME type 校验（防止改后缀绕过）
+  if (file.type && !ALLOWED_MIME.includes(file.type)) {
+    ElMessage.error('文件内容与后缀不匹配，请确认文件未被修改')
+    uploadRef.value?.clearFiles()
+    return
+  }
+
+  // 3. 文件大小校验
+  if (file.size === 0) {
+    ElMessage.error('文件为空，请选择有效的数据文件')
     uploadRef.value?.clearFiles()
     return
   }
 
   if (file.size > MAX_SIZE) {
-    ElMessage.error('文件大小不能超过 2MB')
+    ElMessage.error(`文件大小超过限制（最大 ${MAX_SIZE / 1024 / 1024}MB）`)
     uploadRef.value?.clearFiles()
     return
   }
@@ -155,7 +177,7 @@ const handleSubmit = async () => {
     if (!valid) return
 
     if (!selectedFile.value) {
-      ElMessage.error('请选择 Excel 文件')
+      ElMessage.error('请选择 Excel/CSV 文件')
       return
     }
 

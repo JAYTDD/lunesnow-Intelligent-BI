@@ -55,8 +55,11 @@ public class FileController {
         User loginUser = userService.getLoginUser(request);
 
         try {
-            // 保存到本地临时目录
-            String filename = loginUser.getId() + "-" + multipartFile.getOriginalFilename();
+            // 保存到本地临时目录（UUID前缀防重名 + 路径遍历）
+            String originalFilename = multipartFile.getOriginalFilename();
+            String sanitizedFilename = originalFilename == null ? "unknown"
+                    : originalFilename.replaceAll("[\\\\/]", "");
+            String filename = loginUser.getId() + "-" + java.util.UUID.randomUUID() + "-" + sanitizedFilename;
             String tempDir = System.getProperty("java.io.tmpdir");
             String filepath = tempDir + "/" + filename;
             multipartFile.transferTo(new java.io.File(filepath));
@@ -86,6 +89,14 @@ public class FileController {
             }
             if (!Arrays.asList("jpeg", "jpg", "svg", "png", "webp").contains(fileSuffix)) {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件类型错误");
+            }
+        } else {
+            if (fileSize > 10 * ONE_M) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件大小不能超过 10MB");
+            }
+            if (!Arrays.asList("jpeg", "jpg", "png", "gif", "webp", "svg",
+                    "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv", "json").contains(fileSuffix)) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件类型不支持");
             }
         }
     }

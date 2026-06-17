@@ -37,6 +37,18 @@ const router = createRouter({
           meta: { requiresAdmin: true },
         },
         {
+          path: 'admin/userCharts/:userId',
+          name: 'userCharts',
+          component: () => import('@/views/admin/UserChartsPage.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
+          path: 'admin/rateLimit',
+          name: 'rateLimit',
+          component: () => import('@/views/admin/RateLimitPage.vue'),
+          meta: { requiresAdmin: true },
+        },
+        {
           path: 'profile',
           name: 'profile',
           component: () => import('@/views/user/ProfilePage.vue'),

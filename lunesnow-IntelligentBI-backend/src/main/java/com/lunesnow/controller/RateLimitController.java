@@ -9,6 +9,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,6 +36,16 @@ public class RateLimitController {
     }
 
     /**
+     * 获取所有限流状态（管理员）
+     */
+    @GetMapping("/list")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<List<Map<String, Object>>> listAllRateLimits() {
+        List<Map<String, Object>> list = redissonRateLimiter.listAll();
+        return ResultUtils.success(list);
+    }
+
+    /**
      * 重置限流（管理员）
      */
     @PostMapping("/reset")
@@ -42,6 +53,17 @@ public class RateLimitController {
     public BaseResponse<Boolean> resetRateLimit(@RequestParam String key) {
         redissonRateLimiter.reset(key);
         log.info("管理员重置限流: key={}", key);
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * 批量重置限流（管理员）
+     */
+    @PostMapping("/resetAll")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> resetAllRateLimits() {
+        redissonRateLimiter.resetAll();
+        log.info("管理员批量重置所有限流");
         return ResultUtils.success(true);
     }
 }

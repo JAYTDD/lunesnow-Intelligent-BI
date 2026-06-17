@@ -29,6 +29,12 @@ declare namespace API {
     message?: string
   }
 
+  type BaseResponseListString = {
+    code?: number
+    data?: string[]
+    message?: string
+  }
+
   type BaseResponseLoginUserVO = {
     code?: number
     data?: LoginUserVO
@@ -194,12 +200,21 @@ declare namespace API {
     chartId: number
   }
 
+  type getChartDataWithFilterParams = {
+    chartId: number
+  }
+
   type getChartStatusParams = {
     id: number
   }
 
   type getChartVOByIdParams = {
     id: number
+  }
+
+  type getColumnDistinctValuesParams = {
+    chartId: number
+    columnName: string
   }
 
   type getRateLimitStatusParams = {

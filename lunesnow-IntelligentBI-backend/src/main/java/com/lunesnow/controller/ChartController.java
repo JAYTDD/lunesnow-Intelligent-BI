@@ -150,6 +150,7 @@ public class ChartController {
      * @return
      */
     @GetMapping("/get/vo")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<ChartVO> getChartVOById(long id, HttpServletRequest request) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -318,21 +319,37 @@ public class ChartController {
                                                 HttpServletRequest request) throws IOException {
 
         // 参数校验
-        ThrowUtils.throwIf(StringUtils.isAnyBlank(name, goal), ErrorCode.PARAMS_ERROR);
-        ThrowUtils.throwIf(multipartFile.isEmpty(), ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(StringUtils.isAnyBlank(name, goal), ErrorCode.PARAMS_ERROR, "图表名称和分析目标不能为空");
+        ThrowUtils.throwIf(multipartFile.isEmpty(), ErrorCode.PARAMS_ERROR, "请选择要上传的文件");
         // 获取当前登录用户
         User loginUser = userService.getLoginUser(request);
         // 校验文件大小
-        ThrowUtils.throwIf(multipartFile.getSize() > 1024 * 1024 * 2, ErrorCode.PARAMS_ERROR, "文件大小不能超过2M");
+        ThrowUtils.throwIf(multipartFile.getSize() > 1024 * 1024 * 2, ErrorCode.PARAMS_ERROR, "文件大小不能超过 2MB");
+        // 校验文件大小（空文件）
+        ThrowUtils.throwIf(multipartFile.getSize() == 0, ErrorCode.PARAMS_ERROR, "文件内容为空，请选择有效的数据文件");
         // 校验文件后缀
         String fileName = multipartFile.getOriginalFilename();
         String fileSuffix = FileUtil.getSuffix(fileName);
-        final List<String> allowedSuffixes = Arrays.asList("xlsx", "xls");
-        ThrowUtils.throwIf(!allowedSuffixes.contains(fileSuffix), ErrorCode.PARAMS_ERROR, "文件校验失败");
+        final List<String> allowedSuffixes = Arrays.asList("xlsx", "xls", "csv");
+        ThrowUtils.throwIf(!allowedSuffixes.contains(fileSuffix), ErrorCode.PARAMS_ERROR,
+                "文件格式不支持，仅允许 xlsx、xls、csv 格式");
 
         // 检查用户任务数量限制
         if (!chartTaskLimiter.tryAcquire(loginUser.getId())) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "您当前有任务正在执行，请稍后再试");
+            // 安全检查：如果数据库中没有 running/waiting 任务，说明 Redis 计数不一致，强制释放
+            long runningCount = chartService.count(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Chart>()
+                    .eq("userId", loginUser.getId())
+                    .in("status", "running", "waiting"));
+            if (runningCount == 0) {
+                chartTaskLimiter.release(loginUser.getId());
+                log.warn("Redis 任务计数与数据库不一致，已强制释放槽位: userId={}", loginUser.getId());
+                // 重新尝试获取
+                if (!chartTaskLimiter.tryAcquire(loginUser.getId())) {
+                    throw new BusinessException(ErrorCode.OPERATION_ERROR, "您当前有任务正在执行，请稍后再试");
+                }
+            } else {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "您当前有任务正在执行，请稍后再试");
+            }
         }
 
         // 转换为 CSV
@@ -463,5 +480,69 @@ public class ChartController {
         // 查询动态表数据
         List<Map<String, String>> data = chartDataService.getTableData(chartId);
         return ResultUtils.success(data);
+    }
+
+    /**
+     * 获取图表原始数据（支持筛选）
+     *
+     * @param chartId 图表ID
+     * @param filters 筛选条件 JSON
+     * @param request
+     * @return
+     */
+    @PostMapping("/get/data/{chartId}/filter")
+    public BaseResponse<List<Map<String, String>>> getChartDataWithFilter(
+            @PathVariable Long chartId,
+            @RequestBody Map<String, String> filters,
+            HttpServletRequest request) {
+        if (chartId == null || chartId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        // 权限校验
+        User loginUser = userService.getLoginUser(request);
+        Chart chart = chartService.getById(chartId);
+        if (chart == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        if (!chart.getUserId().equals(loginUser.getId()) && !userService.isAdmin(request)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+
+        // 查询筛选后的数据
+        List<Map<String, String>> data = chartDataService.getTableDataWithFilter(chartId, filters);
+        return ResultUtils.success(data);
+    }
+
+    /**
+     * 获取图表某列的唯一值（用于筛选下拉选项）
+     *
+     * @param chartId 图表ID
+     * @param columnName 列名
+     * @param request
+     * @return
+     */
+    @GetMapping("/get/data/{chartId}/column/{columnName}")
+    public BaseResponse<List<String>> getColumnDistinctValues(
+            @PathVariable Long chartId,
+            @PathVariable String columnName,
+            HttpServletRequest request) {
+        if (chartId == null || chartId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        // 权限校验
+        User loginUser = userService.getLoginUser(request);
+        Chart chart = chartService.getById(chartId);
+        if (chart == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        if (!chart.getUserId().equals(loginUser.getId()) && !userService.isAdmin(request)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+
+        // 获取列唯一值
+        List<String> values = chartDataService.getColumnDistinctValues(chartId, columnName);
+        return ResultUtils.success(values);
     }
 }

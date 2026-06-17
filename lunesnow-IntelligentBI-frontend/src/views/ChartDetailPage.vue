@@ -51,6 +51,12 @@
             <div class="card-header">
               <span>图表展示</span>
               <div v-if="chart.status === 'succeed'" class="card-actions">
+                <el-button size="small" @click="showFilter = !showFilter">
+                  <el-icon><Filter /></el-icon> 筛选
+                </el-button>
+                <el-button v-if="hasActiveFilters" size="small" type="info" plain @click="clearFilters">
+                  清除筛选
+                </el-button>
                 <el-dropdown @command="handleExport">
                   <el-button size="small">
                     <el-icon><Download /></el-icon> 导出
@@ -75,6 +81,75 @@
               </div>
             </div>
           </template>
+
+          <!-- 筛选区域 -->
+          <div v-if="showFilter" class="filter-section">
+            <div class="filter-grid">
+              <div v-for="col in filterableColumns" :key="col" class="filter-item">
+                <label class="filter-label">{{ col }}</label>
+
+                <!-- 日期列：日期范围 -->
+                <div v-if="isDateColumn(col)" class="range-inputs">
+                  <el-date-picker
+                    v-model="dateRangeFilters[col]"
+                    type="daterange"
+                    range-separator="~"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期"
+                    size="small"
+                    value-format="YYYY-MM-DD"
+                    @change="handleFilter"
+                  />
+                </div>
+
+                <!-- 数值列：范围筛选 -->
+                <div v-else-if="isNumericColumn(col)" class="range-inputs">
+                  <el-input
+                    v-model="rangeFilters[col].min"
+                    placeholder="最小"
+                    size="small"
+                    clearable
+                    @change="handleFilter"
+                  />
+                  <span class="range-sep">~</span>
+                  <el-input
+                    v-model="rangeFilters[col].max"
+                    placeholder="最大"
+                    size="small"
+                    clearable
+                    @change="handleFilter"
+                  />
+                </div>
+
+                <!-- 文本列：下拉筛选 -->
+                <el-select
+                  v-else
+                  :model-value="filters[col]"
+                  placeholder="全部"
+                  clearable
+                  filterable
+                  size="small"
+                  :reserve-keyword="false"
+                  @update:model-value="(val: string) => handleFilterChange(col, val)"
+                >
+                  <el-option
+                    v-for="val in (columnValues[col] || []).slice(0, 50)"
+                    :key="val"
+                    :label="val"
+                    :value="val"
+                  />
+                  <el-option v-if="(columnValues[col] || []).length > 50" disabled>
+                    <span style="color: #999">仅显示前 50 项，请搜索</span>
+                  </el-option>
+                </el-select>
+              </div>
+            </div>
+            <div class="filter-summary">
+              共 <strong>{{ tableData.length }}</strong> 条数据
+              <span v-if="hasActiveFilters">（已筛选）</span>
+            </div>
+          </div>
+
           <!-- 生成中 -->
           <div
             v-if="chart.status === 'waiting' || chart.status === 'running'"
@@ -112,10 +187,12 @@
         <el-card class="data-card" shadow="never">
           <template #header>
             <div class="card-header">
-              <span>原始数据</span>
+              <span>原始数据（共 {{ allTableData.length }} 条）</span>
             </div>
           </template>
-          <el-table :data="tableData" style="width: 100%" max-height="400" stripe>
+
+          <!-- 数据表格 -->
+          <el-table :data="pagedTableData" style="width: 100%" stripe>
             <el-table-column
               v-for="col in tableColumns"
               :key="col"
@@ -124,6 +201,18 @@
               min-width="120"
             />
           </el-table>
+
+          <!-- 分页 -->
+          <div class="pagination-wrapper">
+            <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="tableData.length"
+              layout="total, sizes, prev, pager, next"
+              background
+            />
+          </div>
         </el-card>
       </div>
 
@@ -139,7 +228,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, onErrorCaptured } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, onErrorCaptured } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -151,8 +240,9 @@ import {
   Download,
   Picture,
   Document,
+  Filter,
 } from '@element-plus/icons-vue'
-import { getChartVoById, getChartData } from '@/api/chartController'
+import { getChartVoById, getChartData, getColumnDistinctValues } from '@/api/chartController'
 import { safeRenderChart } from '@/utils/chartValidator'
 import ChartEditor from '@/components/ChartEditor.vue'
 import * as echarts from 'echarts'
@@ -167,6 +257,64 @@ const tableColumns = ref<string[]>([])
 const showEditor = ref(false)
 const componentError = ref<Error | null>(null)
 let chartInstance: echarts.ECharts | null = null
+let resizeHandler: (() => void) | null = null
+
+// 筛选相关
+const showFilter = ref(false)
+const filters = ref<Record<string, string>>({})
+const rangeFilters = ref<Record<string, { min: string; max: string }>>({})
+const dateRangeFilters = ref<Record<string, [string, string] | null>>({})
+const columnValues = ref<Record<string, string[]>>({})
+const allTableData = ref<Record<string, string>[]>([])
+
+// 分页
+const currentPage = ref(1)
+const pageSize = ref(20)
+
+// 分页数据
+const pagedTableData = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return tableData.value.slice(start, start + pageSize.value)
+})
+
+// 可筛选的列（全部列）
+const filterableColumns = computed(() => {
+  return tableColumns.value
+})
+
+// 判断是否为日期列
+const isDateColumn = (col: string) => {
+  if (allTableData.value.length === 0) return false
+  const sample = allTableData.value.slice(0, 10)
+  const datePattern = /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/
+  return sample.every((row) => {
+    const val = row[col]
+    return val === '' || val === null || datePattern.test(val)
+  })
+}
+
+// 判断是否为数值列
+const isNumericColumn = (col: string) => {
+  if (allTableData.value.length === 0) return false
+  if (isDateColumn(col)) return false // 日期列不算数值列
+  const sample = allTableData.value.slice(0, 10)
+  return sample.every((row) => {
+    const val = row[col]
+    return val === '' || val === null || !isNaN(Number(val))
+  })
+}
+
+// 是否有激活的筛选
+const hasActiveFilters = computed(() => {
+  const hasTextFilter = Object.values(filters.value).some((v) => v && v !== '')
+  const hasRangeFilter = Object.values(rangeFilters.value).some(
+    (r) => (r.min && r.min !== '') || (r.max && r.max !== '')
+  )
+  const hasDateFilter = Object.values(dateRangeFilters.value).some(
+    (r) => r && r[0] && r[1]
+  )
+  return hasTextFilter || hasRangeFilter || hasDateFilter
+})
 
 // 捕获子组件渲染错误
 onErrorCaptured((err, instance, info) => {
@@ -224,16 +372,76 @@ const renderChart = () => {
     // 安全渲染（解析 + 校验 + 渲染）
     const { success, error } = safeRenderChart(chart.value.genChart, (option) => {
       chartInstance = echarts.init(chartDom)
-      chartInstance.setOption(option)
 
-      const handler = () => chartInstance?.resize()
-      window.addEventListener('resize', handler)
+      // 用筛选后的数据更新图表
+      const updatedOption = updateChartWithData(option, tableData.value)
+      chartInstance.setOption(updatedOption)
+
+      // Remove previous resize listener before adding a new one
+      if (resizeHandler) {
+        window.removeEventListener('resize', resizeHandler)
+      }
+      resizeHandler = () => chartInstance?.resize()
+      window.addEventListener('resize', resizeHandler)
     })
 
     if (!success) {
       ElMessage.error(`图表渲染失败: ${error}`)
     }
   })
+}
+
+// 用筛选后的数据更新图表配置
+const updateChartWithData = (option: any, data: Record<string, string>[]) => {
+  if (!data || data.length === 0) return option
+
+  const columns = Object.keys(data[0])
+  const newOption = JSON.parse(JSON.stringify(option)) // 深拷贝
+
+  // 1. 处理 dataset.source
+  if (newOption.dataset && newOption.dataset.source) {
+    newOption.dataset.source = data
+  }
+
+  // 2. 处理 series[].data（根据图表类型）
+  if (newOption.series && Array.isArray(newOption.series)) {
+    newOption.series.forEach((series: any) => {
+      if (series.type === 'pie') {
+        // 饼图：取第一个和第二个列
+        const nameCol = columns[0]
+        const valueCol = columns[1]
+        series.data = data.map((row) => ({
+          name: row[nameCol] || '',
+          value: Number(row[valueCol]) || 0,
+        }))
+      } else if (series.type === 'scatter') {
+        // 散点图：取前两个数值列
+        const numCols = columns.filter((col) =>
+          data.every((row) => row[col] === '' || !isNaN(Number(row[col])))
+        )
+        if (numCols.length >= 2) {
+          series.data = data.map((row) => [
+            Number(row[numCols[0]]) || 0,
+            Number(row[numCols[1]]) || 0,
+          ])
+        }
+      } else {
+        // 柱状图/折线图：取数值列
+        const valueCol = columns.find(
+          (col) => col !== newOption.xAxis?.data?.[0] && !isNaN(Number(data[0]?.[col]))
+        ) || columns[columns.length - 1]
+        series.data = data.map((row) => Number(row[valueCol]) || 0)
+      }
+    })
+  }
+
+  // 3. 更新 xAxis/yAxis 的分类数据
+  if (newOption.xAxis && newOption.xAxis.type === 'category') {
+    const catCol = columns[0]
+    newOption.xAxis.data = data.map((row) => row[catCol] || '')
+  }
+
+  return newOption
 }
 
 // 下载文件（支持 data URL）
@@ -325,14 +533,116 @@ const loadChartData = async () => {
     const dataRes = await getChartData({ chartId: id })
     console.log('@@@@', dataRes)
     if (dataRes.data && dataRes.data.length > 0) {
+      allTableData.value = dataRes.data
       tableData.value = dataRes.data
       tableColumns.value = Object.keys(dataRes.data[0])
+
+      // 加载可筛选列的唯一值
+      loadColumnValues()
     }
   } catch (error: unknown) {
     ElMessage.error(`加载失败：${error instanceof Error ? error.message : '未知错误'}`)
   } finally {
     loading.value = false
   }
+}
+
+// 加载列唯一值 + 初始化范围筛选
+const loadColumnValues = async () => {
+  const id = route.params.id as number
+
+  for (const col of tableColumns.value) {
+    if (isDateColumn(col)) {
+      // 日期列：初始化日期范围筛选
+      dateRangeFilters.value[col] = null
+    } else if (isNumericColumn(col)) {
+      // 数值列：初始化范围筛选
+      rangeFilters.value[col] = { min: '', max: '' }
+    } else {
+      // 文本列：加载唯一值
+      try {
+        const res = await getColumnDistinctValues({ chartId: id, columnName: col })
+        if (res.data) {
+          columnValues.value = { ...columnValues.value, [col]: res.data }
+        }
+      } catch {
+        // 忽略
+      }
+    }
+  }
+}
+
+// 处理筛选变化（文本列）
+const handleFilterChange = (col: string, val: string) => {
+  filters.value = { ...filters.value, [col]: val || '' }
+  handleFilter()
+}
+
+// 处理筛选（本地过滤，不请求后端）
+const handleFilter = () => {
+  let result = [...allTableData.value]
+
+  // 1. 文本筛选（模糊匹配）
+  for (const [key, value] of Object.entries(filters.value)) {
+    if (value && value !== '') {
+      result = result.filter((row) => {
+        const cell = (row[key] || '').toLowerCase()
+        return cell.includes(value.toLowerCase())
+      })
+    }
+  }
+
+  // 2. 数值范围筛选
+  for (const [key, range] of Object.entries(rangeFilters.value)) {
+    if (range.min !== '' && range.min != null) {
+      const min = Number(range.min)
+      if (!isNaN(min)) {
+        result = result.filter((row) => Number(row[key]) >= min)
+      }
+    }
+    if (range.max !== '' && range.max != null) {
+      const max = Number(range.max)
+      if (!isNaN(max)) {
+        result = result.filter((row) => Number(row[key]) <= max)
+      }
+    }
+  }
+
+  // 3. 日期范围筛选
+  for (const [key, range] of Object.entries(dateRangeFilters.value)) {
+    if (range && range[0] && range[1]) {
+      const start = new Date(range[0])
+      const end = new Date(range[1])
+      result = result.filter((row) => {
+        const cellDate = new Date(row[key])
+        return cellDate >= start && cellDate <= end
+      })
+    }
+  }
+
+  tableData.value = result
+  currentPage.value = 1 // 重置到第一页
+
+  // 筛选后重新渲染图表
+  if (chart.value.status === 'succeed' && chartInstance) {
+    const updatedOption = updateChartWithData(chartInstance.getOption(), result)
+    chartInstance.setOption(updatedOption, true)
+  }
+}
+
+// 清除筛选
+const clearFilters = () => {
+  filters.value = {}
+  // 重置数值范围筛选
+  for (const key of Object.keys(rangeFilters.value)) {
+    rangeFilters.value[key] = { min: '', max: '' }
+  }
+  // 重置日期范围筛选
+  for (const key of Object.keys(dateRangeFilters.value)) {
+    dateRangeFilters.value[key] = null
+  }
+  tableData.value = allTableData.value
+  currentPage.value = 1
 }
 
 // 页面重试
@@ -344,12 +654,25 @@ const handlePageRetry = () => {
 onMounted(() => {
   loadChartData()
 })
+
+onUnmounted(() => {
+  // Remove resize listener
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler)
+    resizeHandler = null
+  }
+  // Dispose chart instance
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = null
+  }
+})
 </script>
 
 <style lang="scss" scoped>
 .page-shell {
   min-height: calc(100vh - 120px);
-  background: #f5f7fa;
+  background: #fafafa;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -361,14 +684,10 @@ onMounted(() => {
   align-items: center;
   gap: 16px;
 
-  .el-button {
-    font-size: 14px;
-  }
-
   h2 {
     font-size: 24px;
     font-weight: 700;
-    color: #1f2937;
+    color: #18181b;
     margin: 0;
   }
 }
@@ -381,19 +700,19 @@ onMounted(() => {
   min-height: 400px;
   gap: 16px;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  border: 1px solid #e4e4e7;
 
   h3 {
     font-size: 18px;
     font-weight: 600;
-    color: #1f2937;
+    color: #18181b;
     margin: 0;
   }
 
   .error-message {
     font-size: 13px;
-    color: #999;
+    color: #71717a;
     max-width: 400px;
     text-align: center;
     word-break: break-all;
@@ -401,9 +720,8 @@ onMounted(() => {
 }
 
 .info-card {
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  border: 1px solid #e4e4e7;
 
   .info-row {
     display: flex;
@@ -419,13 +737,15 @@ onMounted(() => {
 
   .info-label {
     font-size: 12px;
-    color: #9ca3af;
+    color: #71717a;
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .info-value {
     font-size: 14px;
-    color: #1f2937;
+    color: #18181b;
     font-weight: 600;
   }
 }
@@ -433,15 +753,14 @@ onMounted(() => {
 .chart-card,
 .result-card,
 .data-card {
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  border: 1px solid #e4e4e7;
 }
 
 .card-header {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #18181b;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -451,6 +770,67 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-section {
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.range-sep {
+  color: #a1a1aa;
+  font-size: 12px;
+}
+
+.filter-summary {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #71717a;
+
+  strong {
+    color: #18181b;
+  }
+}
+
+.pagination-wrapper {
+  padding: 16px 0 0;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #f4f4f5;
 }
 
 .chart-container {
@@ -477,12 +857,12 @@ onMounted(() => {
   .loading-text {
     font-size: 20px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: #18181b;
   }
 
   .loading-sub {
     font-size: 14px;
-    color: #9ca3af;
+    color: #71717a;
   }
 }
 
@@ -494,18 +874,18 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  background: linear-gradient(135deg, rgba(245, 108, 108, 0.05) 0%, rgba(245, 108, 108, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.05) 100%);
   border-radius: 8px;
 
   .failed-text {
     font-size: 18px;
     font-weight: 600;
-    color: #f56c6c;
+    color: #ef4444;
   }
 
   .failed-sub {
     font-size: 13px;
-    color: #999;
+    color: #71717a;
     max-width: 300px;
     text-align: center;
     word-break: break-all;
@@ -515,7 +895,7 @@ onMounted(() => {
 .result-content {
   font-size: 14px;
   line-height: 1.8;
-  color: #4b5563;
+  color: #3f3f46;
   white-space: pre-wrap;
   word-break: break-word;
 }

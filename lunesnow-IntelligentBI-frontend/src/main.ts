@@ -5,6 +5,7 @@ import App from './App.vue'
 import router from './router'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import './styles/global-override.scss'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import './access'
 

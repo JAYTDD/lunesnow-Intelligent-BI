@@ -21,9 +21,11 @@ body,
 }
 
 body {
-  font-family: Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  color: #111827;
-  background: #f7f8fa;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: #18181b;
+  background: #fafafa;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {

@@ -1,9 +1,9 @@
 <template>
   <div class="page-shell">
     <div class="page-header">
-      <div>
-        <div class="eyebrow">My Charts</div>
-        <h2>我的图表</h2>
+      <div class="header-content">
+        <h1 class="page-title">我的图表</h1>
+        <p class="page-desc">管理和查看你生成的所有图表</p>
       </div>
     </div>
 
@@ -45,7 +45,10 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
           <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
@@ -139,7 +142,7 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Loading, CircleCloseFilled } from '@element-plus/icons-vue'
+import { Loading, CircleCloseFilled, Search } from '@element-plus/icons-vue'
 import {
   listMyChartVoByPage,
   deleteChart,
@@ -457,14 +460,20 @@ onUnmounted(() => {
 }
 
 .page-header {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .page-title {
   font-size: 28px;
   font-weight: 700;
   color: #18181b;
-  margin: 0 0 6px 0;
+  margin: 0;
   letter-spacing: -0.5px;
 }
 
@@ -503,7 +512,7 @@ onUnmounted(() => {
 
   :deep(.el-input__wrapper),
   :deep(.el-cascader__search-input) {
-    border-radius: 10px;
+    border-radius: 8px;
     box-shadow: 0 0 0 1px #e4e4e7;
 
     &:hover {
@@ -548,7 +557,7 @@ onUnmounted(() => {
 
   &:hover {
     border-color: transparent;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
   }
 
   :deep(.el-card__header) {
@@ -613,12 +622,12 @@ onUnmounted(() => {
   .loading-text {
     font-size: 18px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: #18181b;
   }
 
   .loading-sub {
     font-size: 13px;
-    color: #9ca3af;
+    color: #71717a;
   }
 }
 
@@ -630,18 +639,18 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: linear-gradient(135deg, rgba(245, 108, 108, 0.05) 0%, rgba(245, 108, 108, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.05) 100%);
   border-radius: 8px;
 
   .failed-text {
     font-size: 16px;
     font-weight: 600;
-    color: #f56c6c;
+    color: #ef4444;
   }
 
   .failed-sub {
     font-size: 12px;
-    color: #999;
+    color: #71717a;
     max-width: 200px;
     text-align: center;
     word-break: break-all;
@@ -663,27 +672,19 @@ onUnmounted(() => {
   justify-content: space-between;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid #f4f4f5;
 }
 
 .chart-time {
   font-size: 12px;
-  color: #9ca3af;
+  color: #71717a;
 }
 
 .pagination-wrapper {
   display: flex;
   justify-content: flex-end;
   padding: 20px;
-  border-top: 1px solid #f3f4f6;
-
-  :deep(.el-pagination) {
-    --el-pagination-hover-color: #10b981;
-  }
-
-  :deep(.el-pager li.is-active) {
-    background-color: #10b981;
-  }
+  border-top: 1px solid #f4f4f5;
 }
 
 @media (max-width: 768px) {

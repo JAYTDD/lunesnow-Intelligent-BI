@@ -1,134 +1,110 @@
 <mxfile host="65bd71144e">
-    <diagram name="系统架构图" id="architecture">
-        <mxGraphModel dx="921" dy="726" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+    <diagram id="arch" name="System Architecture">
+        <mxGraphModel dx="1005" dy="771" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="title" value="Intelligent BI 系统架构图" style="text;html=1;fontSize=24;fontStyle=1;align=center;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="500" y="20" width="400" height="40" as="geometry"/>
+                <mxCell id="title" value="&lt;b&gt;Intelligent BI 系统架构&lt;/b&gt;" style="text;html=1;fontSize=22;align=center;verticalAlign=middle;fontColor=#1a1a2e;" vertex="1" parent="1">
+                    <mxGeometry x="550" y="20" width="500" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="frontend_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f9ff;strokeColor=#0ea5e9;strokeWidth=2;dashed=1;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="80" width="1520" height="180" as="geometry"/>
+                <mxCell id="user_icon" value="👤" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzZjNzU3ZCI+PHBhdGggZD0iTTEyIDRhMyAzIDAgMSAxIDAgNiAzIDMgMCAwIDAgMC02em0tOCA5YTggOCAwIDAgMCA4LjQgNy45NWMtLjYtLjktMS44LTEuNS0zLjQtMS41cy0yLjguNi0zLjQgMS41QTggOCAwIDAgMCA0IDEzeiIvPjwvc3ZnPg==;" vertex="1" parent="1">
+                    <mxGeometry x="760" y="75" width="40" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="frontend_label" value="前端 (Vue 3 + TypeScript)" style="text;html=1;fontSize=14;fontStyle=1;align=left;verticalAlign=top;fillColor=none;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="90" width="200" height="30" as="geometry"/>
+                <mxCell id="frontend_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF5FB;strokeColor=#2980B9;strokeWidth=2;arcSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="140" width="1360" height="150" as="geometry"/>
                 </mxCell>
-                <mxCell id="page_home" value="&lt;b&gt;主页&lt;/b&gt;&lt;br&gt;数据看板" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#0ea5e9;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="120" width="100" height="50" as="geometry"/>
+                <mxCell id="frontend_label" value="&lt;b&gt;Vue 3 前端&lt;/b&gt;" style="text;html=1;fontSize=14;align=left;verticalAlign=top;fontColor=#2980B9;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="148" width="150" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="page_add" value="&lt;b&gt;新建图表&lt;/b&gt;&lt;br&gt;上传Excel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#0ea5e9;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="180" y="120" width="100" height="50" as="geometry"/>
+                <mxCell id="pages" value="&lt;b&gt;页面&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;仪表盘 · 图表管理&lt;br&gt;用户管理 · 个人中心&lt;br&gt;限流配置" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#85C1E9;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="150" y="180" width="200" height="90" as="geometry"/>
                 </mxCell>
-                <mxCell id="page_my" value="&lt;b&gt;我的图表&lt;/b&gt;&lt;br&gt;列表+轮询" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#0ea5e9;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="300" y="120" width="100" height="50" as="geometry"/>
+                <mxCell id="composables" value="&lt;b&gt;组合函数&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;usePolling · useChart&lt;br&gt;useWebSocket · useTheme" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#85C1E9;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="380" y="180" width="220" height="90" as="geometry"/>
                 </mxCell>
-                <mxCell id="page_detail" value="&lt;b&gt;图表详情&lt;/b&gt;&lt;br&gt;编辑+导出" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#0ea5e9;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="420" y="120" width="100" height="50" as="geometry"/>
+                <mxCell id="utils" value="&lt;b&gt;工具层&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;request (Axios)&lt;br&gt;ECharts 渲染&lt;br&gt;权限守卫" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#85C1E9;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="630" y="180" width="200" height="90" as="geometry"/>
                 </mxCell>
-                <mxCell id="page_dashboard" value="&lt;b&gt;仪表盘&lt;/b&gt;&lt;br&gt;拖拽布局" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#0ea5e9;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="540" y="120" width="100" height="50" as="geometry"/>
+                <mxCell id="api_layer" value="&lt;b&gt;API 层&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;chartController · userController&lt;br&gt;rateLimitController" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#85C1E9;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="860" y="180" width="260" height="90" as="geometry"/>
                 </mxCell>
-                <mxCell id="mod_websocket" value="&lt;b&gt;WebSocket&lt;/b&gt;&lt;br&gt;实时通知" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="700" y="120" width="100" height="50" as="geometry"/>
+                <mxCell id="components" value="&lt;b&gt;组件&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;GlobalHeader&lt;br&gt;GlobalSider&lt;br&gt;ChartCard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#85C1E9;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="1150" y="180" width="180" height="90" as="geometry"/>
                 </mxCell>
-                <mxCell id="mod_polling" value="&lt;b&gt;usePolling&lt;/b&gt;&lt;br&gt;指数退避" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="820" y="120" width="100" height="50" as="geometry"/>
+                <mxCell id="backend_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAFAF1;strokeColor=#27AE60;strokeWidth=2;arcSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="340" width="1360" height="180" as="geometry"/>
                 </mxCell>
-                <mxCell id="mod_drag" value="&lt;b&gt;useDraggable&lt;/b&gt;&lt;br&gt;拖拽Hook" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="940" y="120" width="100" height="50" as="geometry"/>
+                <mxCell id="backend_label" value="&lt;b&gt;Spring Boot 3 后端&lt;/b&gt;" style="text;html=1;fontSize=14;align=left;verticalAlign=top;fontColor=#27AE60;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="348" width="200" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="mod_validator" value="&lt;b&gt;图表校验&lt;/b&gt;&lt;br&gt;三重容错" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="1060" y="120" width="100" height="50" as="geometry"/>
+                <mxCell id="controller" value="&lt;b&gt;Controller&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;Chart · User&lt;br&gt;File · WebSocket&lt;br&gt;RateLimit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82E0AA;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="150" y="385" width="180" height="90" as="geometry"/>
                 </mxCell>
-                <mxCell id="mod_store" value="&lt;b&gt;Pinia Store&lt;/b&gt;&lt;br&gt;用户状态" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ede9fe;strokeColor=#8b5cf6;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="1220" y="120" width="100" height="50" as="geometry"/>
+                <mxCell id="aop" value="&lt;b&gt;AOP 切面&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;@AuthCheck 鉴权&lt;br&gt;@RateLimit 限流&lt;br&gt;@OperationLog 日志" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82E0AA;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="360" y="385" width="200" height="90" as="geometry"/>
                 </mxCell>
-                <mxCell id="mod_router" value="&lt;b&gt;Vue Router&lt;/b&gt;&lt;br&gt;路由守卫" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ede9fe;strokeColor=#8b5cf6;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="1340" y="120" width="100" height="50" as="geometry"/>
+                <mxCell id="service" value="&lt;b&gt;Service&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;Chart · User · Auth&lt;br&gt;ChartData · FileUpload&lt;br&gt;异步任务 &amp; 消息推送" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82E0AA;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="590" y="385" width="220" height="90" as="geometry"/>
                 </mxCell>
-                <mxCell id="arrow_frontend_backend" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#64748b;strokeWidth=2;" parent="1" source="page_home" target="backend_box" edge="1">
+                <mxCell id="ai" value="&lt;b&gt;AI 集成&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;DeepSeek API&lt;br&gt;Excel 数据解析&lt;br&gt;智能图表推荐" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82E0AA;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="840" y="385" width="180" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="ws" value="&lt;b&gt;WebSocket&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;任务进度推送&lt;br&gt;实时状态通知" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82E0AA;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="1050" y="385" width="180" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="manager" value="&lt;b&gt;Manager&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;ChartTaskLimiter&lt;br&gt;RedissonRateLimiter&lt;br&gt;Redis Lua 原子脚本" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82E0AA;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="1260" y="385" width="200" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="storage_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDF2E9;strokeColor=#E67E22;strokeWidth=2;arcSize=8;" vertex="1" parent="1">
+                    <mxGeometry x="120" y="590" width="1360" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="storage_label" value="&lt;b&gt;存储 &amp; 中间件&lt;/b&gt;" style="text;html=1;fontSize=14;align=left;verticalAlign=top;fontColor=#E67E22;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="598" width="150" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="mysql" value="&lt;b&gt;MySQL&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;chart_1 ~ chart_8 分表&lt;br&gt;user · file · operation_log&lt;br&gt;ShardingSphere-Row 分片" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F0B27A;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="150" y="630" width="280" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="redis" value="&lt;b&gt;Redis&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;Session · 限流计数器&lt;br&gt;Lua 原子脚本 · 缓存" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F0B27A;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="470" y="630" width="250" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="mq" value="&lt;b&gt;RabbitMQ&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;chart-task 队列&lt;br&gt;chart-task-dlx 死信队列&lt;br&gt;AI 异步处理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F0B27A;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="760" y="630" width="250" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="deepseek" value="&lt;b&gt;DeepSeek API&lt;/b&gt;&lt;hr size=&quot;1&quot;&gt;AI 数据分析&lt;br&gt;图表生成建议" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F0B27A;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+                    <mxGeometry x="1050" y="630" width="220" height="75" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_user_frontend" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#2980B9;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="user_icon" target="frontend_box">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="backend_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;strokeWidth=2;dashed=1;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="300" width="1520" height="220" as="geometry"/>
-                </mxCell>
-                <mxCell id="backend_label" value="后端 (Spring Boot 3 + Java 21)" style="text;html=1;fontSize=14;fontStyle=1;align=left;verticalAlign=top;fillColor=none;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="310" width="250" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="ctrl_chart" value="&lt;b&gt;ChartController&lt;/b&gt;&lt;br&gt;图表CRUD + AI生成" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#f59e0b;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="350" width="160" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="ctrl_user" value="&lt;b&gt;UserController&lt;/b&gt;&lt;br&gt;登录注册 + 权限" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#f59e0b;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="240" y="350" width="140" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="ctrl_file" value="&lt;b&gt;FileController&lt;/b&gt;&lt;br&gt;文件上传" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#f59e0b;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="400" y="350" width="120" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="aop_auth" value="&lt;b&gt;@AuthCheck&lt;/b&gt;&lt;br&gt;权限校验" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef9c3;strokeColor=#eab308;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="420" width="110" height="45" as="geometry"/>
-                </mxCell>
-                <mxCell id="aop_ratelimit" value="&lt;b&gt;@RateLimit&lt;/b&gt;&lt;br&gt;接口限流" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef9c3;strokeColor=#eab308;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="190" y="420" width="110" height="45" as="geometry"/>
-                </mxCell>
-                <mxCell id="svc_chart" value="&lt;b&gt;ChartService&lt;/b&gt;&lt;br&gt;图表业务逻辑" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#f59e0b;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="340" y="420" width="130" height="45" as="geometry"/>
-                </mxCell>
-                <mxCell id="svc_chartdata" value="&lt;b&gt;ChartDataService&lt;/b&gt;&lt;br&gt;动态分表管理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#f59e0b;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="490" y="420" width="140" height="45" as="geometry"/>
-                </mxCell>
-                <mxCell id="mq_producer" value="&lt;b&gt;Producer&lt;/b&gt;&lt;br&gt;图表任务投递" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce7f3;strokeColor=#ec4899;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="700" y="350" width="120" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="mq_consumer" value="&lt;b&gt;Consumer&lt;/b&gt;&lt;br&gt;任务消费+重试" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce7f3;strokeColor=#ec4899;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="840" y="350" width="120" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="mq_dlq" value="&lt;b&gt;Dead Letter&lt;/b&gt;&lt;br&gt;死信队列" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce7f3;strokeColor=#ec4899;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="840" y="420" width="120" height="45" as="geometry"/>
-                </mxCell>
-                <mxCell id="ws_handler" value="&lt;b&gt;WebSocketHandler&lt;/b&gt;&lt;br&gt;实时通知推送" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d1fae5;strokeColor=#10b981;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="1020" y="350" width="140" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="limiter_task" value="&lt;b&gt;ChartTaskLimiter&lt;/b&gt;&lt;br&gt;用户并发限制" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="1020" y="420" width="140" height="45" as="geometry"/>
-                </mxCell>
-                <mxCell id="limiter_api" value="&lt;b&gt;RedissonLimiter&lt;/b&gt;&lt;br&gt;令牌桶限流" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="1180" y="420" width="130" height="45" as="geometry"/>
-                </mxCell>
-                <mxCell id="ai_deepseek" value="&lt;b&gt;DeepSeek API&lt;/b&gt;&lt;br&gt;图表生成 + 数据分析" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#a855f7;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="1360" y="350" width="160" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="arrow_backend_data" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#64748b;strokeWidth=2;" parent="1" source="svc_chart" target="data_box" edge="1">
+                <mxCell id="e_frontend_backend" value="HTTP / WS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7F8C8D;fontStyle=1;fontSize=11;labelBackgroundColor=#FFFFFF;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="frontend_box" target="backend_box">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="data_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#22c55e;strokeWidth=2;dashed=1;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="560" width="1520" height="120" as="geometry"/>
+                <mxCell id="e_backend_mysql" value="JDBC" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#7F8C8D;fontSize=10;labelBackgroundColor=#FFFFFF;exitX=0.15;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="backend_box" target="mysql">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="data_label" value="数据层" style="text;html=1;fontSize=14;fontStyle=1;align=left;verticalAlign=top;fillColor=none;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="570" width="100" height="30" as="geometry"/>
+                <mxCell id="e_backend_redis" value="Lettuce" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#7F8C8D;fontSize=10;labelBackgroundColor=#FFFFFF;exitX=0.35;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="backend_box" target="redis">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="db_mysql" value="&lt;b&gt;MySQL&lt;/b&gt;&lt;br&gt;chart 表 + chart_{id} 动态分表" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#22c55e;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="600" width="260" height="50" as="geometry"/>
+                <mxCell id="e_backend_mq" value="AMQP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#7F8C8D;fontSize=10;labelBackgroundColor=#FFFFFF;exitX=0.6;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="backend_box" target="mq">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="db_redis" value="&lt;b&gt;Redis&lt;/b&gt;&lt;br&gt;Session + 限流计数 + 任务计数" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#22c55e;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="360" y="600" width="260" height="50" as="geometry"/>
+                <mxCell id="e_backend_ai" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#7F8C8D;fontSize=10;labelBackgroundColor=#FFFFFF;exitX=0.85;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="backend_box" target="deepseek">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="db_rabbitmq" value="&lt;b&gt;RabbitMQ&lt;/b&gt;&lt;br&gt;chart.queue + dead-letter.queue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#22c55e;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="660" y="600" width="260" height="50" as="geometry"/>
+                <mxCell id="e_mq_ai" value="消费消息" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#E67E22;dashed=1;fontSize=10;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="mq" target="deepseek">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="db_redisson" value="&lt;b&gt;Redisson&lt;/b&gt;&lt;br&gt;分布式锁 + 令牌桶" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#22c55e;fontSize=11;" parent="1" vertex="1">
-                    <mxGeometry x="960" y="600" width="200" height="50" as="geometry"/>
+                <mxCell id="e_redis_backend" value="Lua 结果" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.5;strokeColor=#E67E22;dashed=1;fontSize=10;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.35;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="redis" target="backend_box">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="flow1_label" value="&lt;h2&gt;1. 用户上传 Excel&lt;/h2&gt;" style="text;html=1;fontSize=10;fontStyle=2;align=center;fillColor=none;strokeColor=none;fontColor=#64748b;" parent="1" vertex="1">
-                    <mxGeometry x="220" y="180" width="120" height="20" as="geometry"/>
+                <mxCell id="tech_tag1" value="Spring Boot 3.2" style="text;html=1;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;fontColor=#27AE60;fillColor=#EAFAF1;strokeColor=#82E0AA;rounded=1;spacingLeft=4;spacingRight=4;" vertex="1" parent="1">
+                    <mxGeometry x="1280" y="352" width="120" height="22" as="geometry"/>
                 </mxCell>
-                <mxCell id="flow2_label" value="&lt;h2&gt;2. 发送 MQ 消息&lt;/h2&gt;" style="text;html=1;fontSize=10;fontStyle=2;align=center;fillColor=none;strokeColor=none;fontColor=#64748b;" parent="1" vertex="1">
-                    <mxGeometry x="720" y="300" width="100" height="20" as="geometry"/>
+                <mxCell id="tech_tag2" value="Vue 3 + TS" style="text;html=1;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;fontColor=#2980B9;fillColor=#EBF5FB;strokeColor=#85C1E9;rounded=1;spacingLeft=4;spacingRight=4;" vertex="1" parent="1">
+                    <mxGeometry x="1280" y="148" width="90" height="22" as="geometry"/>
                 </mxCell>
-                <mxCell id="flow3_label" value="&lt;h2&gt;3. 调用 AI 生成&lt;/h2&gt;" style="text;html=1;fontSize=10;fontStyle=2;align=center;fillColor=none;strokeColor=none;fontColor=#64748b;" parent="1" vertex="1">
-                    <mxGeometry x="1390" y="310" width="100" height="20" as="geometry"/>
-                </mxCell>
-                <mxCell id="flow4_label" value="&lt;h2&gt;4. WebSocket 推送&lt;/h2&gt;" style="text;html=1;fontSize=10;fontStyle=2;align=center;fillColor=none;strokeColor=none;fontColor=#64748b;" parent="1" vertex="1">
-                    <mxGeometry x="1050" y="310" width="110" height="20" as="geometry"/>
+                <mxCell id="tech_tag3" value="分库分表" style="text;html=1;fontSize=10;fontStyle=1;align=center;verticalAlign=middle;fontColor=#E67E22;fillColor=#FDF2E9;strokeColor=#F0B27A;rounded=1;spacingLeft=4;spacingRight=4;" vertex="1" parent="1">
+                    <mxGeometry x="1280" y="600" width="75" height="22" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
