@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { useWebSocket } from '@/composables/useWebSocket'
-import GlobalSider from '@/components/layout/GlobalSider.vue'
+import GlobalSider from '@/layouts/GlobalSider.vue'
 
 // 建立 WebSocket 连接
 const { connected: wsConnected } = useWebSocket()

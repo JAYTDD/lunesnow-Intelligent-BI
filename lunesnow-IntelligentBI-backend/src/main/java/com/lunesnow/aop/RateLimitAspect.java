@@ -67,12 +67,10 @@ public class RateLimitAspect {
         if (!allowed) {
             // 记录限流次数
             long count = LIMIT_COUNT.incrementAndGet();
-            log.warn("请求被限流: key={}, count={}, method={}", key, count, method.getName());
+            log.warn("[LIMIT][REJECT] 请求被限流: key={}, method={}", key, method.getName());
 
             throw new BusinessException(ErrorCode.OPERATION_ERROR, rateLimit.message());
         }
-
-        log.debug("请求通过限流: key={}, method={}", key, method.getName());
     }
 
     /**
@@ -131,7 +129,7 @@ public class RateLimitAspect {
                 return ip;
             }
         } catch (Exception e) {
-            log.error("获取客户端 IP 失败", e);
+            log.error("[LIMIT][KEY] 获取客户端IP失败", e);
         }
         return "unknown";
     }
@@ -153,7 +151,7 @@ public class RateLimitAspect {
                 }
             }
         } catch (Exception e) {
-            log.error("获取用户 ID 失败", e);
+            log.error("[LIMIT][KEY] 获取用户ID失败", e);
         }
         return "anonymous";
     }

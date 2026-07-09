@@ -55,13 +55,12 @@ public class ChartMessageConsumer {
         Long chartId = message.getChartId();
         long startTime = System.currentTimeMillis();
 
-        log.info("开始处理图表任务, chartId={}, redelivered={}, retryCount={}",
-                chartId, redelivered, message.getRetryCount());
+        log.info("[MQ][CONSUME] 开始处理: chartId={}, retryCount={}", chartId, message.getRetryCount());
 
         try {
             // 检查重试次数
             if (message.getRetryCount() >= MAX_RETRY_COUNT) {
-                log.warn("图表任务超过最大重试次数, chartId={}, retryCount={}", chartId, message.getRetryCount());
+                log.warn("[MQ][CONSUME] 超最大重试: chartId={}, retryCount={}", chartId, message.getRetryCount());
                 handleFailedTask(chartId, startTime, "超过最大重试次数(" + MAX_RETRY_COUNT + ")");
                 // 释放任务槽位
                 try {
@@ -70,7 +69,7 @@ public class ChartMessageConsumer {
                         chartTaskLimiter.release(retryChart.getUserId());
                     }
                 } catch (Exception ex) {
-                    log.error("释放任务槽位异常: chartId={}", chartId, ex);
+                    log.error("[MQ][RELEASE] 释放槽位异常: chartId={}", chartId, ex);
                 }
                 channel.basicAck(deliveryTag, false);
                 return;
@@ -142,7 +141,7 @@ public class ChartMessageConsumer {
             updateSuccess.setRunningTime(runningTime);
             chartService.updateById(updateSuccess);
 
-            log.info("图表生成任务完成, chartId={}, 耗时={}ms", chartId, runningTime);
+            log.info("[MQ][CONSUME] 任务完成: chartId={}, cost={}ms", chartId, runningTime);
 
             // 释放任务槽位
             Chart chart = chartService.getById(chartId);
@@ -159,7 +158,7 @@ public class ChartMessageConsumer {
 
         } catch (Exception e) {
             long runningTime = System.currentTimeMillis() - startTime;
-            log.error("图表生成任务失败, chartId={}", chartId, e);
+            log.error("[MQ][CONSUME] 任务失败: chartId={}", chartId, e);
 
             // 更新为 failed
             handleFailedTask(chartId, startTime, e.getMessage());
@@ -175,15 +174,15 @@ public class ChartMessageConsumer {
                             failChart.getUserId(), chartId, failChart.getName(), e.getMessage());
                 }
             } catch (Exception ex) {
-                log.error("释放任务槽位异常: chartId={}", chartId, ex);
+                    log.error("[MQ][RELEASE] 释放槽位异常: chartId={}", chartId, ex);
             }
 
             try {
                 // 拒绝消息，requeue=false 表示不重新入队，直接进入死信队列
                 channel.basicNack(deliveryTag, false, false);
-                log.info("消息已拒绝并进入死信队列, chartId={}", chartId);
+                log.info("[MQ][DEAD] 消息已进入死信: chartId={}", chartId);
             } catch (IOException ioException) {
-                log.error("拒绝消息失败, chartId={}", chartId, ioException);
+                log.error("[MQ][NACK] 拒绝消息失败: chartId={}", chartId, ioException);
             }
         }
     }
@@ -208,32 +207,31 @@ public class ChartMessageConsumer {
     @RabbitListener(queues = RabbitConfig.DEAD_LETTER_QUEUE)
     public void handleDeadLetter(ChartTaskMessage message) {
         Long chartId = message.getChartId();
-        log.error("死信队列收到失败任务: chartId={}, messageId={}",
-                chartId, message.getMessageId());
+        log.error("[MQ][DEAD] 收到死信: chartId={}", chartId);
 
         // 查询当前图表状态
         Chart chart = chartService.getById(chartId);
 
         // 情况 1：图表已删除 → 忽略
         if (chart == null) {
-            log.info("图表已删除，忽略死信消息: chartId={}", chartId);
+            log.info("[MQ][DEAD] 忽略死信: chartId={}, reason=已删除", chartId);
             return;
         }
 
         // 情况 2：图表已成功（用户重新生成了）→ 忽略旧消息
         if ("succeed".equals(chart.getStatus())) {
-            log.info("图表已成功，忽略旧的死信消息: chartId={}", chartId);
+            log.info("[MQ][DEAD] 忽略死信: chartId={}, reason=已成功", chartId);
             return;
         }
 
         // 情况 3：图表正在重新生成 → 等待
         if ("waiting".equals(chart.getStatus()) || "running".equals(chart.getStatus())) {
-            log.info("图表正在重新生成，暂存死信消息: chartId={}", chartId);
+            log.info("[MQ][DEAD] 忽略死信: chartId={}, reason=正在重生成", chartId);
             return;
         }
 
         // 情况 4：图表仍然是 failed → 告警通知
-        log.warn("【告警】图表任务失败，需要人工处理: chartId={}", chartId);
+        log.warn("[MQ][DEAD] 任务需人工处理: chartId={}", chartId);
         // TODO: 可以在这里发送告警通知（钉钉/邮件/短信）
     }
 

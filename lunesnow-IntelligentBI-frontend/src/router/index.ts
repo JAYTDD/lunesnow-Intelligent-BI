@@ -13,22 +13,22 @@ const router = createRouter({
         {
           path: '',
           name: 'home',
-          component: () => import('@/views/HomePage.vue'),
+          component: () => import('@/views/home/HomePage.vue'),
         },
         {
           path: 'add/chart',
           name: 'addChart',
-          component: () => import('@/views/AddChartPage.vue'),
+          component: () => import('@/views/chart/AddChartPage.vue'),
         },
         {
           path: 'my/charts',
           name: 'myCharts',
-          component: () => import('@/views/MyChartsPage.vue'),
+          component: () => import('@/views/chart/MyChartsPage.vue'),
         },
         {
           path: 'chart/detail/:id',
           name: 'chartDetail',
-          component: () => import('@/views/ChartDetailPage.vue'),
+          component: () => import('@/views/chart/ChartDetailPage.vue'),
         },
         {
           path: 'admin/userManage',
@@ -56,7 +56,7 @@ const router = createRouter({
         {
           path: 'dashboard/editor',
           name: 'dashboardEditor',
-          component: () => import('@/views/DashboardEditor.vue'),
+          component: () => import('@/views/chart/DashboardEditor.vue'),
         },
       ],
     },
@@ -75,12 +75,12 @@ const router = createRouter({
     {
       path: '/403',
       name: 'forbidden',
-      component: () => import('@/views/Error403Page.vue'),
+      component: () => import('@/views/error/Error403Page.vue'),
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'notFound',
-      component: () => import('@/views/NotFoundPage.vue'),
+      component: () => import('@/views/error/NotFoundPage.vue'),
     },
   ],
 })

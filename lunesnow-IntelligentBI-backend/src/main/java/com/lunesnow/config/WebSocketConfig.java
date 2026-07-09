@@ -27,6 +27,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
         registry.addHandler(
                 chartWebSocketHandler, // WebSocket 处理器
                 "/ws/chart") // URL 路径
-                .setAllowedOrigins("http://localhost:5173", "http://localhost:3000", "https://lunesnow.com");
+                // 开发环境前端端口不固定（5173/5174/...），用 origin pattern 通配 localhost 任意端口
+                .setAllowedOriginPatterns("http://localhost:*", "https://lunesnow.com");
     }
 }

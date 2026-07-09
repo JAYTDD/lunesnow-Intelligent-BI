@@ -26,7 +26,7 @@ public class ChartDataServiceImpl implements ChartDataService {
     @Override
     public void createTableFromCsv(Long chartId, String csvData) {
         if (csvData == null || csvData.isBlank()) {
-            log.warn("CSV 数据为空，跳过创建表: chart_{}", chartId);
+            log.warn("[DATA][CREATE] CSV为空跳过建表: chartId={}", chartId);
             return;
         }
 
@@ -34,7 +34,7 @@ public class ChartDataServiceImpl implements ChartDataService {
         String[] lines = csvData.split("\n");
 
         if (lines.length < 1) {
-            log.warn("CSV 数据行数不足，跳过创建表: {}", tableName);
+            log.warn("[DATA][CREATE] CSV行数不足跳过建表: chartId={}", chartId);
             return;
         }
 
@@ -44,20 +44,19 @@ public class ChartDataServiceImpl implements ChartDataService {
             if (columns.isEmpty()) {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件表头为空，请确保第一行为列名");
             }
-            log.info("解析列名: {}", columns);
 
             // 2. 创建表（列名就是 Excel 的列名）
             createTable(tableName, columns);
-            log.info("创建表 {} 完成", tableName);
+            log.info("[DATA][CREATE] 建表完成: table={}", tableName);
 
             // 3. 插入数据
             insertData(tableName, columns, lines);
         } catch (BusinessException e) {
-            log.error("创建表 {} 失败: {}", tableName, e.getMessage(), e);
+            log.error("[DATA][CREATE] 建表失败: table={}, error={}", tableName, e.getMessage());
             dropTable(chartId);
             throw e;
         } catch (Exception e) {
-            log.error("创建表 {} 失败: {}", tableName, e.getMessage(), e);
+            log.error("[DATA][CREATE] 建表失败: table={}, error={}", tableName, e.getMessage());
             dropTable(chartId);
             // 提供更精确的错误信息
             String msg = e.getMessage();
@@ -77,10 +76,10 @@ public class ChartDataServiceImpl implements ChartDataService {
         try {
             if (isTableExists(tableName)) {
                 jdbcTemplate.execute("DROP TABLE IF EXISTS `" + tableName + "`");
-                log.info("删除表 {} 完成", tableName);
+                log.info("[DATA][DELETE] 删表完成: table={}", tableName);
             }
         } catch (Exception e) {
-            log.error("删除表 {} 失败: {}", tableName, e.getMessage(), e);
+            log.error("[DATA][DELETE] 删表失败: table={}, error={}", tableName, e.getMessage());
             throw e;
         }
     }
@@ -92,7 +91,7 @@ public class ChartDataServiceImpl implements ChartDataService {
         try {
             // 检查表是否存在
             if (!isTableExists(tableName)) {
-                log.warn("表 {} 不存在", tableName);
+                log.warn("[DATA][QUERY] 表不存在: table={}", tableName);
                 return Collections.emptyList();
             }
 
@@ -109,7 +108,7 @@ public class ChartDataServiceImpl implements ChartDataService {
                 return map;
             }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         } catch (Exception e) {
-            log.error("查询表 {} 数据失败: {}", tableName, e.getMessage(), e);
+            log.error("[DATA][QUERY] 查询失败: table={}, error={}", tableName, e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -138,7 +137,7 @@ public class ChartDataServiceImpl implements ChartDataService {
                     if (entry.getValue() != null && !entry.getValue().isEmpty()) {
                         // 校验列名白名单，防止 SQL 注入
                         if (!actualColumns.contains(entry.getKey())) {
-                            log.warn("忽略无效的筛选列名: {}", entry.getKey());
+                            log.warn("[DATA][QUERY] 忽略无效筛选列: column={}", entry.getKey());
                             continue;
                         }
                         conditions.add("`" + entry.getKey() + "` LIKE ?");
@@ -160,7 +159,7 @@ public class ChartDataServiceImpl implements ChartDataService {
                 return map;
             }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         } catch (Exception e) {
-            log.error("查询表 {} 数据失败: {}", tableName, e.getMessage(), e);
+            log.error("[DATA][QUERY] 查询失败: table={}, error={}", tableName, e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -190,7 +189,7 @@ public class ChartDataServiceImpl implements ChartDataService {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("获取列 {} 唯一值失败: {}", columnName, e.getMessage(), e);
+            log.error("[DATA][QUERY] 获取列唯一值失败: column={}, error={}", columnName, e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -259,7 +258,7 @@ public class ChartDataServiceImpl implements ChartDataService {
         if (!placeholders.isEmpty()) {
             sql.append(String.join(", ", placeholders));
             jdbcTemplate.update(sql.toString(), params.toArray());
-            log.info("插入数据到表 {} 完成，共 {} 行", tableName, placeholders.size());
+            log.info("[DATA][INSERT] 数据插入完成: table={}, rows={}", tableName, placeholders.size());
         }
     }
 

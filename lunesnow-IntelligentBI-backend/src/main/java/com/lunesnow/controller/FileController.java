@@ -63,10 +63,10 @@ public class FileController {
             String tempDir = System.getProperty("java.io.tmpdir");
             String filepath = tempDir + "/" + filename;
             multipartFile.transferTo(new java.io.File(filepath));
-            log.info("文件已保存到本地: {}", filepath);
+            log.info("[FILE][UPLOAD] 文件已保存: userId={}, filename={}", loginUser.getId(), sanitizedFilename);
             return ResultUtils.success(filepath);
         } catch (Exception e) {
-            log.error("文件上传失败", e);
+            log.error("[FILE][UPLOAD] 上传失败", e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "上传失败");
         }
     }

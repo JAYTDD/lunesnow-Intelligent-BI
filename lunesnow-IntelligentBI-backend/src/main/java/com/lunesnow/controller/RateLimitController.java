@@ -52,7 +52,7 @@ public class RateLimitController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> resetRateLimit(@RequestParam String key) {
         redissonRateLimiter.reset(key);
-        log.info("管理员重置限流: key={}", key);
+        log.info("[LIMIT][RESET] 管理员重置限流: key={}", key);
         return ResultUtils.success(true);
     }
 
@@ -63,7 +63,7 @@ public class RateLimitController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> resetAllRateLimits() {
         redissonRateLimiter.resetAll();
-        log.info("管理员批量重置所有限流");
+        log.info("[LIMIT][RESET] 管理员批量重置限流");
         return ResultUtils.success(true);
     }
 }

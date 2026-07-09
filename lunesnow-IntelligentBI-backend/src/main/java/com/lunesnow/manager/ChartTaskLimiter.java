@@ -97,16 +97,16 @@ public class ChartTaskLimiter {
             );
 
             if (result != null && result > 0) {
-                log.info("用户 {} 获取任务槽位: {}/{}", userId, result, MAX_TASKS);
+                log.info("[LIMIT][ACQUIRE] 获取任务槽位: userId={}, current={}/{}", userId, result, MAX_TASKS);
                 return true;
             }
 
-            log.warn("用户 {} 任务数量已满: {}/{}", userId, MAX_TASKS, MAX_TASKS);
+            log.warn("[LIMIT][ACQUIRE] 任务已满: userId={}, max={}", userId, MAX_TASKS);
             return false;
 
         } catch (Exception e) {
             // Redis 异常时放行（降级处理）
-            log.error("任务限制器异常，放行请求: userId={}", userId, e);
+            log.error("[LIMIT][ACQUIRE] 限制器异常放行: userId={}", userId, e);
             return true;
         }
     }
@@ -125,13 +125,11 @@ public class ChartTaskLimiter {
                     Collections.singletonList(key)
             );
 
-            if (count != null && count == 0) {
-                log.info("用户 {} 任务槽位已清空", userId);
-            } else if (count != null) {
-                log.info("用户 {} 释放任务槽位: 剩余 {}", userId, count);
+            if (count != null) {
+                log.info("[LIMIT][RELEASE] 释放槽位: userId={}, remaining={}", userId, count);
             }
         } catch (Exception e) {
-            log.error("释放任务槽位异常: userId={}", userId, e);
+            log.error("[LIMIT][RELEASE] 释放异常: userId={}", userId, e);
         }
     }
 

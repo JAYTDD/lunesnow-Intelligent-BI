@@ -1,6 +1,10 @@
 /**
  * 可拖拽元素 Hook
- * 使用 transform: translate 优化性能，避免触发页面重排
+ * 使用 transform: translate3d 优化性能，避免触发页面重排。
+ * - target: 被移动的元素（设置 transform）
+ * - handle: 触发拖拽的元素（默认同 target），可用于只在标题栏拖拽
+ * - getZoom: 返回画布缩放比例，用于换算拖拽位移
+ * - ignore: 命中返回 true 时不触发拖拽（如按钮）
  */
 
 import { ref, onUnmounted, type Ref } from 'vue'
@@ -16,6 +20,10 @@ interface DraggableOptions {
   onDragStart?: (x: number, y: number) => void
   /** 是否启用拖拽 */
   disabled?: boolean
+  /** 获取当前画布缩放比例，用于换算拖拽位移 */
+  getZoom?: () => number
+  /** 命中该元素时不触发拖拽（如操作按钮） */
+  ignore?: (target: EventTarget | null) => boolean
 }
 
 interface DraggableReturn {
@@ -25,29 +33,30 @@ interface DraggableReturn {
   y: Ref<number>
   /** 是否正在拖拽 */
   isDragging: Ref<boolean>
-  /** 绑定到元素的事件 */
-  bind: (el: HTMLElement) => void
+  /** 绑定：target=被移动元素，handle=触发拖拽元素(默认同 target) */
+  bind: (target: HTMLElement, handle?: HTMLElement) => void
   /** 设置位置 */
   setPosition: (x: number, y: number) => void
 }
 
 export function useDraggable(options: DraggableOptions = {}): DraggableReturn {
-  const { initX = 0, initY = 0, onDragEnd, onDragStart, disabled = false } = options
+  const { initX = 0, initY = 0, onDragEnd, onDragStart, disabled = false, getZoom, ignore } = options
 
   const x = ref(initX)
   const y = ref(initY)
   const isDragging = ref(false)
 
   let targetEl: HTMLElement | null = null
+  let handleEl: HTMLElement | null = null
   let startX = 0
   let startY = 0
   let startTranslateX = 0
   let startTranslateY = 0
 
-  // 更新元素位置（使用 transform，GPU 加速）
+  // 更新元素位置（使用 transform，GPU 加速，避免重排）
   const updatePosition = () => {
     if (!targetEl) return
-    targetEl.style.transform = `translate(${x.value}px, ${y.value}px)`
+    targetEl.style.transform = `translate3d(${x.value}px, ${y.value}px, 0)`
   }
 
   // 鼠标按下
@@ -55,12 +64,17 @@ export function useDraggable(options: DraggableOptions = {}): DraggableReturn {
     if (disabled) return
     // 只响应左键
     if (e.button !== 0) return
+    // 命中忽略元素（如按钮）不触发拖拽
+    if (ignore?.(e.target)) return
 
     isDragging.value = true
     startX = e.clientX
     startY = e.clientY
     startTranslateX = x.value
     startTranslateY = y.value
+
+    // 仅拖拽时提升图层，避免常驻 will-change 占用显存
+    if (targetEl) targetEl.style.willChange = 'transform'
 
     // 添加全局事件监听
     document.addEventListener('mousemove', handleMouseMove)
@@ -77,11 +91,12 @@ export function useDraggable(options: DraggableOptions = {}): DraggableReturn {
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging.value) return
 
+    const zoom = getZoom ? getZoom() : 1
     const deltaX = e.clientX - startX
     const deltaY = e.clientY - startY
 
-    x.value = startTranslateX + deltaX
-    y.value = startTranslateY + deltaY
+    x.value = startTranslateX + deltaX / zoom
+    y.value = startTranslateY + deltaY / zoom
 
     // 直接更新 transform，不触发重排
     updatePosition()
@@ -92,6 +107,7 @@ export function useDraggable(options: DraggableOptions = {}): DraggableReturn {
     if (!isDragging.value) return
 
     isDragging.value = false
+    if (targetEl) targetEl.style.willChange = ''
 
     // 移除全局事件监听
     document.removeEventListener('mousemove', handleMouseMove)
@@ -104,12 +120,12 @@ export function useDraggable(options: DraggableOptions = {}): DraggableReturn {
     onDragEnd?.(x.value, y.value)
   }
 
-  // 绑定到元素
-  const bind = (el: HTMLElement) => {
-    targetEl = el
-    el.style.cursor = 'grab'
-    el.style.willChange = 'transform' // 提示浏览器优化
-    el.addEventListener('mousedown', handleMouseDown)
+  // 绑定到元素：target 被移动，handle 触发拖拽
+  const bind = (target: HTMLElement, handle?: HTMLElement) => {
+    targetEl = target
+    handleEl = handle ?? target
+    handleEl.style.cursor = 'grab'
+    handleEl.addEventListener('mousedown', handleMouseDown)
     updatePosition()
   }
 
@@ -122,8 +138,8 @@ export function useDraggable(options: DraggableOptions = {}): DraggableReturn {
 
   // 清理
   onUnmounted(() => {
-    if (targetEl) {
-      targetEl.removeEventListener('mousedown', handleMouseDown)
+    if (handleEl) {
+      handleEl.removeEventListener('mousedown', handleMouseDown)
     }
     document.removeEventListener('mousemove', handleMouseMove)
     document.removeEventListener('mouseup', handleMouseUp)

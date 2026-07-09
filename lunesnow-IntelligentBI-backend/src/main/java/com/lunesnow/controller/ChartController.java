@@ -342,7 +342,7 @@ public class ChartController {
                     .in("status", "running", "waiting"));
             if (runningCount == 0) {
                 chartTaskLimiter.release(loginUser.getId());
-                log.warn("Redis 任务计数与数据库不一致，已强制释放槽位: userId={}", loginUser.getId());
+                log.warn("[CHART][SUBMIT] Redis计数不一致强制释放: userId={}", loginUser.getId());
                 // 重新尝试获取
                 if (!chartTaskLimiter.tryAcquire(loginUser.getId())) {
                     throw new BusinessException(ErrorCode.OPERATION_ERROR, "您当前有任务正在执行，请稍后再试");
@@ -375,7 +375,7 @@ public class ChartController {
             chartMessageProducer.sendChartTask(chartId);
         } catch (Exception e) {
             // 发送失败，标记任务失败
-            log.warn("发送图表任务消息失败, chartId={}", chartId);
+            log.warn("[CHART][SUBMIT] 发送任务消息失败: chartId={}", chartId);
             Chart updateFailed = new Chart();
             updateFailed.setId(chartId);
             updateFailed.setStatus("failed");
@@ -419,7 +419,7 @@ public class ChartController {
             chartMessageProducer.sendChartTask(id);
         } catch (Exception e) {
             // 发送失败，标记任务失败
-            log.warn("发送重试任务消息失败, chartId={}", id);
+            log.warn("[CHART][RETRY] 发送重试消息失败: chartId={}", id);
             Chart updateFailed = new Chart();
             updateFailed.setId(id);
             updateFailed.setStatus("failed");

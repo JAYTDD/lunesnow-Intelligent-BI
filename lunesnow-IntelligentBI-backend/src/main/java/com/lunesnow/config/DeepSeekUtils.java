@@ -46,7 +46,7 @@ public class DeepSeekUtils {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 
             if (response.getStatusCode() != HttpStatus.OK) {
-                log.error("DeepSeek API error: {}", response.getBody());
+                log.error("[AI][CALL] API响应异常: status={}", response.getStatusCode());
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "AI 模型调用失败");
             }
 
@@ -59,7 +59,7 @@ public class DeepSeekUtils {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("DeepSeek API call failed", e);
+            log.error("[AI][CALL] API调用失败", e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "AI 模型调用失败");
         }
     }

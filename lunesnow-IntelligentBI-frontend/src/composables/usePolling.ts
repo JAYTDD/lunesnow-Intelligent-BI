@@ -41,11 +41,12 @@ export function usePolling(callback: () => Promise<boolean>, options: PollingOpt
 
   // 执行轮询
   const tick = async () => {
+    // 页面不可见或正在执行中，跳过
     if (!isPageVisible.value || ticking) {
       console.log('[轮询] 跳过（不可见或正在执行）')
       return
     }
-    ticking = true
+    ticking = true // 设置正在执行
     console.log(`[轮询] 执行，当前间隔: ${currentInterval.value}ms`)
     try {
       // 执行回调函数，返回 true 表示停止轮询
@@ -58,8 +59,7 @@ export function usePolling(callback: () => Promise<boolean>, options: PollingOpt
       // 回调成功（返回 false），重置间隔，保持快速轮询
       currentInterval.value = interval
     } catch (error) {
-      console.error('[轮询] 执行出错:', error)
-      // 出错时退避
+      console.log('[轮询] 回调出错：', error)
       currentInterval.value = Math.min(currentInterval.value * backoff, maxInterval)
       console.log(`[轮询] 退避至: ${currentInterval.value}ms`)
     } finally {
@@ -75,8 +75,8 @@ export function usePolling(callback: () => Promise<boolean>, options: PollingOpt
       return
     }
 
-    isRunning.value = true
-    currentInterval.value = interval
+    isRunning.value = true // 设置正在运行
+    currentInterval.value = interval // 设置初始间隔
     console.log(`[轮询] 状态: running=true, interval=${interval}ms`)
 
     // 立即执行一次，等完成后再调度下一次
@@ -119,13 +119,13 @@ export function usePolling(callback: () => Promise<boolean>, options: PollingOpt
 
   // Page Visibility API
   const handleVisibilityChange = () => {
-    const wasVisible = isPageVisible.value
-    isPageVisible.value = !document.hidden
+    const wasVisible = isPageVisible.value // 记录当前可见状态
+    isPageVisible.value = !document.hidden // 更新可见状态
     console.log(`[轮询] 页面可见性变化: ${wasVisible} → ${isPageVisible.value}`)
     if (!isPageVisible.value) {
-      pause()
+      pause() // 页面不可见时暂停
     } else {
-      resume()
+      resume() // 页面可见时恢复
     }
   }
 

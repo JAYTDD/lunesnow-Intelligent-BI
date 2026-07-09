@@ -33,7 +33,6 @@
     >
       <div
         class="canvas"
-        ref="canvasRef"
         :style="{
           transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px) scale(${canvasZoom})`,
           transformOrigin: '0 0',
@@ -45,45 +44,16 @@
           <p>点击"添加图表"选择你的图表</p>
         </div>
 
-        <!-- 可拖拽 + 可缩放的图表卡片 -->
-        <div
+        <!-- 可拖拽 + 可缩放的图表卡片（由 ChartCard 自行处理拖拽/缩放/渲染） -->
+        <ChartCard
           v-for="item in dashboardCharts"
           :key="item.id"
-          class="chart-card"
-          :class="{ 'chart-card--dragging': item.isDragging }"
-          :style="{
-            transform: `translate(${item.x}px, ${item.y}px)`,
-            width: item.width + 'px',
-            height: item.height + 'px',
-          }"
-          @mousedown.self="startDrag($event, item)"
-        >
-          <!-- 拖拽手柄 -->
-          <div class="card-header" @mousedown.stop="startDrag($event, item)">
-            <div class="card-handle">
-              <el-icon :size="14"><Rank /></el-icon>
-              <span class="card-name">{{ item.name }}</span>
-            </div>
-            <div class="card-actions">
-              <el-button link size="small" @click.stop="refreshChart(item)">
-                <el-icon :size="14"><Refresh /></el-icon>
-              </el-button>
-              <el-button link size="small" type="danger" @click.stop="removeChart(item.id)">
-                <el-icon :size="14"><Close /></el-icon>
-              </el-button>
-            </div>
-          </div>
-
-          <!-- 图表容器 -->
-          <div class="card-body">
-            <div :id="`echart-${item.id}`" class="chart-container"></div>
-          </div>
-
-          <!-- 缩放手柄 -->
-          <div class="resize-handle" @mousedown.stop="startResize($event, item)">
-            <el-icon :size="10"><BottomRight /></el-icon>
-          </div>
-        </div>
+          :item="item"
+          :zoom="canvasZoom"
+          @update:position="(x, y) => onUpdatePosition(item.id, x, y)"
+          @update:size="(w, h) => onUpdateSize(item.id, w, h)"
+          @remove="removeChart"
+        />
       </div>
     </div>
 
@@ -120,37 +90,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import {
   Plus,
-  Rank,
-  Refresh,
-  Close,
   DataBoard,
   PieChart,
-  BottomRight,
   FullScreen,
   Aim,
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { listMyChartVoByPage } from '@/api/chartController'
-import { safeParseChartConfig } from '@/utils/chartValidator'
-import * as echarts from 'echarts'
-
-// 仪表盘图表项
-interface DashboardItem {
-  id: string // 唯一标识 (chart_数据库ID 或自生成)
-  chartId?: number // 数据库图表 ID
-  name: string
-  type: string
-  genChart?: string // ECharts 配置 JSON
-  x: number
-  y: number
-  width: number
-  height: number
-  isDragging: boolean
-  isResizing: boolean
-}
+import type { DashboardItem } from '@/types/dashboard'
+import ChartCard from '@/components/ChartCard.vue'
 
 const STORAGE_KEY = 'dashboard_layout'
 
@@ -159,12 +110,11 @@ const showChartPicker = ref(false)
 const loadingCharts = ref(false)
 const myCharts = ref<API.ChartVO[]>([])
 const dashboardCharts = ref<DashboardItem[]>([])
-const chartInstances = new Map<string, echarts.ECharts>()
 
 // 画布缩放和平移状态
 const canvasZoom = ref(1)
 const canvasOffset = ref({ x: 0, y: 0 })
-let canvasPanState = {
+const canvasPanState = {
   isPanning: false,
   startX: 0,
   startY: 0,
@@ -172,111 +122,27 @@ let canvasPanState = {
   startOffsetY: 0,
 }
 
-// 当前操作的状态
-let dragState:
-  | {
-      item: DashboardItem | null
-      startX: number
-      startY: number
-      startItemX: number
-      startItemY: number
-    }
-  | { item: null; startX: 0; startY: 0; startItemX: 0; startItemY: 0 } = {
-  item: null,
-  startX: 0,
-  startY: 0,
-  startItemX: 0,
-  startItemY: 0,
-}
-
-let resizeState: {
-  item: DashboardItem | null
-  startX: number
-  startY: number
-  startW: number
-  startH: number
-} = { item: null, startX: 0, startY: 0, startW: 0, startH: 0 }
-
-// ==================== 拖拽移动 ====================
-const startDrag = (e: MouseEvent, item: DashboardItem) => {
-  if (e.button !== 0) return
-  item.isDragging = true
-  dragState = {
-    item,
-    startX: e.clientX,
-    startY: e.clientY,
-    startItemX: item.x,
-    startItemY: item.y,
-  }
-  document.addEventListener('mousemove', onDragMove)
-  document.addEventListener('mouseup', onDragEnd)
-  document.body.style.userSelect = 'none'
-  document.body.style.cursor = 'grabbing'
-}
-
-const onDragMove = (e: MouseEvent) => {
-  const { item, startX, startY, startItemX, startItemY } = dragState as any
-  if (!item) return
-  // 考虑缩放比例
-  const zoom = canvasZoom.value
-  item.x = startItemX + (e.clientX - startX) / zoom
-  item.y = startItemY + (e.clientY - startY) / zoom
-}
-
-const onDragEnd = () => {
-  const { item } = dragState as any
+// ==================== 卡片事件（来自 ChartCard） ====================
+const onUpdatePosition = (id: string, x: number, y: number) => {
+  const item = dashboardCharts.value.find((d) => d.id === id)
   if (item) {
-    item.isDragging = false
+    item.x = x
+    item.y = y
+    saveLayout()
   }
-  dragState = { item: null, startX: 0, startY: 0, startItemX: 0, startItemY: 0 }
-  document.removeEventListener('mousemove', onDragMove)
-  document.removeEventListener('mouseup', onDragEnd)
-  document.body.style.userSelect = ''
-  document.body.style.cursor = ''
-  saveLayout()
 }
 
-// ==================== 拖拽缩放 ====================
-const startResize = (e: MouseEvent, item: DashboardItem) => {
-  if (e.button !== 0) return
-  item.isResizing = true
-  resizeState = {
-    item,
-    startX: e.clientX,
-    startY: e.clientY,
-    startW: item.width,
-    startH: item.height,
-  }
-  document.addEventListener('mousemove', onResizeMove)
-  document.addEventListener('mouseup', onResizeEnd)
-  document.body.style.userSelect = 'none'
-  document.body.style.cursor = 'nwse-resize'
-}
-
-const onResizeMove = (e: MouseEvent) => {
-  const { item, startX, startY, startW, startH } = resizeState as any
-  if (!item) return
-  // 考虑缩放比例
-  const zoom = canvasZoom.value
-  const newW = Math.max(200, startW + (e.clientX - startX) / zoom)
-  const newH = Math.max(150, startH + (e.clientY - startY) / zoom)
-  item.width = newW
-  item.height = newH
-}
-
-const onResizeEnd = () => {
-  const { item } = resizeState as any
+const onUpdateSize = (id: string, w: number, h: number) => {
+  const item = dashboardCharts.value.find((d) => d.id === id)
   if (item) {
-    item.isResizing = false
-    // 缩放后重新渲染图表
-    const instance = chartInstances.get(item.id)
-    instance?.resize()
+    item.width = w
+    item.height = h
+    saveLayout()
   }
-  resizeState = { item: null, startX: 0, startY: 0, startW: 0, startH: 0 }
-  document.removeEventListener('mousemove', onResizeMove)
-  document.removeEventListener('mouseup', onResizeEnd)
-  document.body.style.userSelect = ''
-  document.body.style.cursor = ''
+}
+
+const removeChart = (id: string) => {
+  dashboardCharts.value = dashboardCharts.value.filter((d) => d.id !== id)
   saveLayout()
 }
 
@@ -426,66 +292,15 @@ const addChartToDashboard = (chart: API.ChartVO) => {
     y: newY,
     width: 340,
     height: 280,
-    isDragging: false,
-    isResizing: false,
   }
 
   dashboardCharts.value.push(newItem)
-
-  nextTick(() => {
-    renderECharts(newItem)
-  })
-
   saveLayout()
   ElMessage.success(`已添加: ${chart.name}`)
 }
 
-// 渲染 ECharts（使用真实配置）
-const renderECharts = (item: DashboardItem) => {
-  nextTick(() => {
-    const dom = document.getElementById(`echart-${item.id}`)
-    if (!dom || !item.genChart) return
-
-    // 清理旧实例
-    const oldInstance = chartInstances.get(item.id)
-    if (oldInstance) {
-      oldInstance.dispose()
-      chartInstances.delete(item.id)
-    }
-
-    const option = safeParseChartConfig(item.genChart)
-    if (!option) {
-      ElMessage.error(`图表"${item.name}"配置解析失败`)
-      return
-    }
-
-    const instance = echarts.init(dom)
-    instance.setOption(option)
-    chartInstances.set(item.id, instance)
-  })
-}
-
-// 刷新单个图表
-const refreshChart = (item: DashboardItem) => {
-  const instance = chartInstances.get(item.id)
-  instance?.resize()
-}
-
-// 移除图表
-const removeChart = (id: string) => {
-  const instance = chartInstances.get(id)
-  if (instance) {
-    instance.dispose()
-    chartInstances.delete(id)
-  }
-  dashboardCharts.value = dashboardCharts.value.filter((d) => d.id !== id)
-  saveLayout()
-}
-
 // 清空所有
 const clearAll = () => {
-  chartInstances.forEach((inst) => inst.dispose())
-  chartInstances.clear()
   dashboardCharts.value = []
   saveLayout()
 }
@@ -501,7 +316,7 @@ const loadMyCharts = async () => {
     if (res.data?.records) {
       myCharts.value = res.data.records
     }
-  } catch (e) {
+  } catch {
     ElMessage.error('加载图表列表失败')
   } finally {
     loadingCharts.value = false
@@ -524,7 +339,7 @@ const saveLayout = () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
 }
 
-const loadLayout = async () => {
+const loadLayout = () => {
   const raw = localStorage.getItem(STORAGE_KEY)
   if (!raw) return
 
@@ -532,49 +347,16 @@ const loadLayout = async () => {
     const data = JSON.parse(raw) as Partial<DashboardItem>[]
     dashboardCharts.value = data.map((d) => ({
       ...d,
-      isDragging: false,
-      isResizing: false,
       width: d.width || 340,
       height: d.height || 280,
     })) as DashboardItem[]
-
-    // 逐个渲染图表
-    nextTick(() => {
-      dashboardCharts.value.forEach((item) => {
-        if (item.genChart) {
-          renderECharts(item)
-        }
-      })
-    })
+    // 图表渲染由 ChartCard 在挂载时自行完成
   } catch (e) {
     console.error('布局加载失败', e)
   }
 }
 
-// ==================== 窗口大小变化 ====================
-const handleResize = () => {
-  chartInstances.forEach((inst) => inst.resize())
-}
-
-onMounted(() => {
-  window.addEventListener('resize', handleResize)
-  window.addEventListener('keydown', onKeyDown)
-  window.addEventListener('keyup', onKeyUp)
-  loadLayout()
-  loadMyCharts()
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-  window.removeEventListener('keydown', onKeyDown)
-  window.removeEventListener('keyup', onKeyUp)
-  document.removeEventListener('mousemove', onCanvasPanMove)
-  document.removeEventListener('mouseup', onCanvasPanEnd)
-  chartInstances.forEach((inst) => inst.dispose())
-  chartInstances.clear()
-})
-
-// 键盘事件：按住空格进入平移模式
+// ==================== 生命周期 ====================
 let spacePressed = false
 const onKeyDown = (e: KeyboardEvent) => {
   if (e.code === 'Space' && !spacePressed && e.target === document.body) {
@@ -590,6 +372,20 @@ const onKeyUp = (e: KeyboardEvent) => {
     document.body.style.cursor = ''
   }
 }
+
+onMounted(() => {
+  window.addEventListener('keydown', onKeyDown)
+  window.addEventListener('keyup', onKeyUp)
+  loadLayout()
+  loadMyCharts()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeyDown)
+  window.removeEventListener('keyup', onKeyUp)
+  document.removeEventListener('mousemove', onCanvasPanMove)
+  document.removeEventListener('mouseup', onCanvasPanEnd)
+})
 </script>
 
 <style lang="scss" scoped>
@@ -692,99 +488,6 @@ const onKeyUp = (e: KeyboardEvent) => {
   p {
     margin: 12px 0 0;
     font-size: 14px;
-  }
-}
-
-/* 图表卡片 */
-.chart-card {
-  position: absolute;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e4e4e7;
-  overflow: hidden;
-  transition:
-    box-shadow 0.2s,
-    border-color 0.2s;
-  will-change: transform;
-
-  &:hover {
-    border-color: #d4d4d8;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-
-    .resize-handle {
-      opacity: 1;
-    }
-  }
-
-  &--dragging {
-    border-color: #18181b;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    z-index: 100;
-  }
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid #f4f4f5;
-  background: #fafafa;
-  cursor: grab;
-
-  &:active {
-    cursor: grabbing;
-  }
-}
-
-.card-handle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #71717a;
-}
-
-.card-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: #3f3f46;
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.card-actions {
-  display: flex;
-  gap: 2px;
-}
-
-.card-body {
-  height: calc(100% - 36px - 20px);
-}
-
-.chart-container {
-  width: 100%;
-  height: 100%;
-}
-
-/* 缩放手柄 */
-.resize-handle {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: nwse-resize;
-  color: #d1d5db;
-  opacity: 0;
-  transition: opacity 0.2s;
-
-  &:hover {
-    color: #71717a;
   }
 }
 

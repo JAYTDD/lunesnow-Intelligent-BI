@@ -3,7 +3,7 @@
  * 支持自动重连、心跳检测
  */
 
-import { ref, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 
@@ -24,17 +24,16 @@ export function useWebSocket(url?: string) {
   const connected = ref(false)
 
   const loginUserStore = useLoginUserStore()
-  const userId = loginUserStore.loginUser.id
 
-  // 构建 WebSocket URL
-  const wsUrl =
-    url ||
-    (() => {
-      const isDev = import.meta.env.DEV
-      const backendHost = isDev ? 'localhost:8088' : window.location.host
-      const protocol = isDev ? 'ws:' : window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      return `${protocol}//${backendHost}/api/ws/chart?userId=${userId}`
-    })()
+  // 动态构建 WebSocket URL（每次连接时读取最新 userId，避免初始化时烤死 -1）
+  const buildWsUrl = (): string => {
+    if (url) return url
+    const uid = loginUserStore.loginUser.id
+    const isDev = import.meta.env.DEV
+    const backendHost = isDev ? 'localhost:8088' : window.location.host
+    const protocol = isDev ? 'ws:' : window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    return `${protocol}//${backendHost}/api/ws/chart?userId=${uid}`
+  }
 
   let ws: WebSocket | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
@@ -44,13 +43,14 @@ export function useWebSocket(url?: string) {
 
   // 连接
   const connect = () => {
-    if (!userId || userId <= 0) {
+    const uid = loginUserStore.loginUser.id
+    if (!uid || uid <= 0) {
       console.log('[WebSocket] 用户未登录，跳过连接')
       return
     }
 
-    console.log('[WebSocket] 连接:', wsUrl)
-    ws = new WebSocket(wsUrl)
+    console.log('[WebSocket] 连接:', buildWsUrl())
+    ws = new WebSocket(buildWsUrl())
 
     ws.onopen = () => {
       console.log('[WebSocket] 连接成功')
@@ -83,7 +83,7 @@ export function useWebSocket(url?: string) {
           })
         }
       } catch (e) {
-        console.error('[WebSocket] 消息解析失败:', e)
+        console.log('[WebSocket] 消息解析失败:', e)
       }
     }
 
@@ -146,8 +146,21 @@ export function useWebSocket(url?: string) {
     }
   }
 
-  // 自动连接
-  connect()
+  // 跟随登录态：登录成功后连接，未登录/登出时断开
+  // 解决"setup 阶段立即 connect 时用户尚未登录（id 为空）导致永远连不上"的问题
+  watch(
+    () => loginUserStore.loginUser.id,
+    (id) => {
+      if (id && id > 0) {
+        // 已存在有效连接则不再重复连接
+        if (ws && ws.readyState === WebSocket.OPEN) return
+        connect()
+      } else {
+        disconnect()
+      }
+    },
+    { immediate: true },
+  )
 
   // 组件卸载时断开
   onUnmounted(() => {

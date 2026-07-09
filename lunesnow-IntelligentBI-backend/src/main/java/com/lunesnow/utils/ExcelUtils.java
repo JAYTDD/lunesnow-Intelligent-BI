@@ -39,7 +39,7 @@ public class ExcelUtils {
             } catch (BusinessException e) {
                 throw e;
             } catch (IOException e) {
-                log.error("读取 CSV 文件失败: {}", e.getMessage(), e);
+                log.error("[DATA][PARSE] CSV读取失败: {}", e.getMessage());
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "CSV 文件读取失败，请确认文件编码为 UTF-8");
             }
         }
@@ -53,7 +53,7 @@ public class ExcelUtils {
                     .headRowNumber(0)
                     .doReadSync();
         } catch (Exception e) {
-            log.error("读取 Excel 文件失败: {}", e.getMessage(), e);
+            log.error("[DATA][PARSE] Excel读取失败: {}", e.getMessage());
             // 区分不同错误类型
             String msg = e.getMessage();
             if (msg != null && msg.contains("not a valid OOXML")) {

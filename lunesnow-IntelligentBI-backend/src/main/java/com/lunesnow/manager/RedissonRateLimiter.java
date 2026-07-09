@@ -57,13 +57,12 @@ public class RedissonRateLimiter {
             boolean acquired = rateLimiter.tryAcquire();
 
             if (!acquired) {
-                log.warn("请求被限流: key={}, permitsPerSecond={}, burstCapacity={}",
-                        key, permitsPerSecond, burstCapacity);
+                log.warn("[LIMIT][REJECT] 请求被限流: key={}", key);
             }
 
             return acquired;
         } catch (Exception e) {
-            log.error("限流处理异常: key={}", key, e);
+            log.error("[LIMIT][ERROR] 限流处理异常: key={}", key, e);
             // 限流异常时放行请求（降级处理）
             return true;
         }
@@ -101,9 +100,9 @@ public class RedissonRateLimiter {
         try {
             RRateLimiter rateLimiter = redissonClient.getRateLimiter(key);
             rateLimiter.delete();
-            log.info("限流器已重置: key={}", key);
+            log.info("[LIMIT][RESET] 限流器已重置: key={}", key);
         } catch (Exception e) {
-            log.error("重置限流器失败: key={}", key, e);
+            log.error("[LIMIT][RESET] 重置失败: key={}", key, e);
         }
     }
 
@@ -119,7 +118,7 @@ public class RedissonRateLimiter {
             Iterable<String> keysIterable = redissonClient.getKeys().getKeysByPattern(RATE_LIMIT_PREFIX + "*");
             Set<String> keys = new HashSet<>();
             keysIterable.forEach(keys::add);
-            log.info("扫描到 {} 个限流相关 key", keys.size());
+            log.debug("[LIMIT][SCAN] 扫描限流key: count={}", keys.size());
             for (String key : keys) {
                 // 只处理主 key（不包含 :value 和 :permits 的）
                 if (key.contains(":value") || key.contains(":permits")) {
@@ -138,11 +137,11 @@ public class RedissonRateLimiter {
                     item.put("exists", true);
                     list.add(item);
                 } catch (Exception e) {
-                    log.warn("读取限流 key 失败: {}", key, e);
+                    log.debug("[LIMIT][SCAN] 读取key失败: key={}", key);
                 }
             }
         } catch (Exception e) {
-            log.error("获取所有限流状态失败", e);
+            log.error("[LIMIT][QUERY] 获取限流状态失败", e);
         }
         return list;
     }
@@ -165,9 +164,9 @@ public class RedissonRateLimiter {
                     // 跳过无法删除的 key
                 }
             }
-            log.info("批量重置限流器完成，共删除 {} 个", count);
+            log.info("[LIMIT][RESET] 批量重置完成: count={}", count);
         } catch (Exception e) {
-            log.error("批量重置限流器失败", e);
+            log.error("[LIMIT][RESET] 批量重置失败", e);
         }
     }
 

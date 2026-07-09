@@ -38,9 +38,9 @@ public class ChartMessageProducer {
                     RabbitConfig.CHART_ROUTING_KEY,
                     message
             );
-            log.info("图表任务消息已发送, chartId={}, messageId={}", chartId, message.getMessageId());
+            log.info("[MQ][SEND] 任务消息已发送: chartId={}, messageId={}", chartId, message.getMessageId());
         } catch (Exception e) {
-            log.error("发送图表任务消息失败, chartId={}", chartId, e);
+            log.error("[MQ][SEND] 发送失败: chartId={}", chartId, e);
             throw e;
         }
     }

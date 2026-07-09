@@ -1,0 +1,205 @@
+{
+  "id": "2026-07-09-000511",
+  "generated_at": "2026-07-08T16:05:11.0943414Z",
+  "language": "zh",
+  "pages": [
+    {
+      "slug": "1-xiang-mu-gai-shu-ai-qu-dong-de-zhi-neng-bi-xi-tong",
+      "title": "项目概述：AI 驱动的智能 BI 系统",
+      "file": "1-xiang-mu-gai-shu-ai-qu-dong-de-zhi-neng-bi-xi-tong.md",
+      "section": "Get Started",
+      "level": "Beginner"
+    },
+    {
+      "slug": "2-kuai-su-qi-dong-ben-di-huan-jing-da-jian-yu-yun-xing",
+      "title": "快速启动：本地环境搭建与运行",
+      "file": "2-kuai-su-qi-dong-ben-di-huan-jing-da-jian-yu-yun-xing.md",
+      "section": "Get Started",
+      "level": "Beginner"
+    },
+    {
+      "slug": "3-api-jie-kou-lan-cong-tu-biao-sheng-cheng-dao-guan-li-hou-tai",
+      "title": "API 接口一览：从图表生成到管理后台",
+      "file": "3-api-jie-kou-lan-cong-tu-biao-sheng-cheng-dao-guan-li-hou-tai.md",
+      "section": "Get Started",
+      "group": "核心功能速览",
+      "level": "Beginner"
+    },
+    {
+      "slug": "4-qian-duan-ye-mian-dao-hang-shou-ye-tu-biao-chuang-jian-yi-biao-pan-yu-hou-tai-guan-li",
+      "title": "前端页面导航：首页、图表创建、仪表盘与后台管理",
+      "file": "4-qian-duan-ye-mian-dao-hang-shou-ye-tu-biao-chuang-jian-yi-biao-pan-yu-hou-tai-guan-li.md",
+      "section": "Get Started",
+      "group": "核心功能速览",
+      "level": "Beginner"
+    },
+    {
+      "slug": "5-xi-tong-jia-gou-quan-jing-spring-boot-3-hou-duan-vue-3-qian-duan-yi-bu-xiao-xi-qu-dong",
+      "title": "系统架构全景：Spring Boot 3 后端 + Vue 3 前端 + 异步消息驱动",
+      "file": "5-xi-tong-jia-gou-quan-jing-spring-boot-3-hou-duan-vue-3-qian-duan-yi-bu-xiao-xi-qu-dong.md",
+      "section": "Deep Dive",
+      "group": "系统架构与数据流转",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "6-wan-zheng-shu-ju-liu-shui-xian-cong-shang-chuan-csv-excel-dao-echarts-tu-biao-de-quan-lian-lu-zhui-zong",
+      "title": "完整数据流水线：从上传 CSV/Excel 到 ECharts 图表的全链路追踪",
+      "file": "6-wan-zheng-shu-ju-liu-shui-xian-cong-shang-chuan-csv-excel-dao-echarts-tu-biao-de-quan-lian-lu-zhui-zong.md",
+      "section": "Deep Dive",
+      "group": "系统架构与数据流转",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "7-tu-biao-sheng-cheng-kong-zhi-qi-wen-jian-xiao-yan-dong-tai-jian-biao-ren-wu-xian-liu-yu-yi-bu-ti-jiao",
+      "title": "图表生成控制器：文件校验、动态建表、任务限流与异步提交",
+      "file": "7-tu-biao-sheng-cheng-kong-zhi-qi-wen-jian-xiao-yan-dong-tai-jian-biao-ren-wu-xian-liu-yu-yi-bu-ti-jiao.md",
+      "section": "Deep Dive",
+      "group": "后端核心：图表生成与异步处理",
+      "level": "Advanced"
+    },
+    {
+      "slug": "8-rabbitmq-xiao-xi-dui-lie-ke-kao-tou-di-shou-dong-ack-yu-si-xin-dui-lie-zhong-shi-ji-zhi",
+      "title": "RabbitMQ 消息队列：可靠投递、手动 ACK 与死信队列重试机制",
+      "file": "8-rabbitmq-xiao-xi-dui-lie-ke-kao-tou-di-shou-dong-ack-yu-si-xin-dui-lie-zhong-shi-ji-zhi.md",
+      "section": "Deep Dive",
+      "group": "后端核心：图表生成与异步处理",
+      "level": "Advanced"
+    },
+    {
+      "slug": "9-deepseek-ai-ji-cheng-prompt-gong-cheng-yu-echarts-pei-zhi-zhi-neng-sheng-cheng",
+      "title": "DeepSeek AI 集成：Prompt 工程与 ECharts 配置智能生成",
+      "file": "9-deepseek-ai-ji-cheng-prompt-gong-cheng-yu-echarts-pei-zhi-zhi-neng-sheng-cheng.md",
+      "section": "Deep Dive",
+      "group": "后端核心：图表生成与异步处理",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "10-websocket-shi-shi-tui-song-concurrenthashmap-hui-hua-guan-li-xin-tiao-jian-ce-yu-zai-xian-zhuang-tai",
+      "title": "WebSocket 实时推送：ConcurrentHashMap 会话管理、心跳检测与在线状态",
+      "file": "10-websocket-shi-shi-tui-song-concurrenthashmap-hui-hua-guan-li-xin-tiao-jian-ce-yu-zai-xian-zhuang-tai.md",
+      "section": "Deep Dive",
+      "group": "后端核心：图表生成与异步处理",
+      "level": "Advanced"
+    },
+    {
+      "slug": "11-dong-tai-shu-ju-fen-biao-ce-lue-an-tu-biao-id-zi-dong-jian-biao-yu-shu-ju-ge-chi",
+      "title": "动态数据分表策略：按图表 ID 自动建表与数据隔离",
+      "file": "11-dong-tai-shu-ju-fen-biao-ce-lue-an-tu-biao-id-zi-dong-jian-biao-yu-shu-ju-ge-chi.md",
+      "section": "Deep Dive",
+      "group": "后端核心：数据存储与安全",
+      "level": "Advanced"
+    },
+    {
+      "slug": "12-excel-csv-wen-jian-jie-xi-easyexcel-du-qu-yu-csv-ge-shi-zhuan-huan",
+      "title": "Excel/CSV 文件解析：EasyExcel 读取与 CSV 格式转换",
+      "file": "12-excel-csv-wen-jian-jie-xi-easyexcel-du-qu-yu-csv-ge-shi-zhuan-huan.md",
+      "section": "Deep Dive",
+      "group": "后端核心：数据存储与安全",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "13-sql-zhu-ru-fang-hu-lie-ming-bai-ming-dan-xiao-yan-yu-an-quan-cha-xun-gou-jian",
+      "title": "SQL 注入防护：列名白名单校验与安全查询构建",
+      "file": "13-sql-zhu-ru-fang-hu-lie-ming-bai-ming-dan-xiao-yan-yu-an-quan-cha-xun-gou-jian.md",
+      "section": "Deep Dive",
+      "group": "后端核心：数据存储与安全",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "14-redis-lua-yuan-zi-jiao-ben-wu-jing-tai-tiao-jian-de-bing-fa-ren-wu-cao-wei-guan-li",
+      "title": "Redis Lua 原子脚本：无竞态条件的并发任务槽位管理",
+      "file": "14-redis-lua-yuan-zi-jiao-ben-wu-jing-tai-tiao-jian-de-bing-fa-ren-wu-cao-wei-guan-li.md",
+      "section": "Deep Dive",
+      "group": "后端核心：限流与并发控制",
+      "level": "Advanced"
+    },
+    {
+      "slug": "15-redisson-ling-pai-tong-xian-liu-qi-fen-bu-shi-huan-jing-xia-jie-kou-fang-shua",
+      "title": "Redisson 令牌桶限流器：分布式环境下接口防刷",
+      "file": "15-redisson-ling-pai-tong-xian-liu-qi-fen-bu-shi-huan-jing-xia-jie-kou-fang-shua.md",
+      "section": "Deep Dive",
+      "group": "后端核心：限流与并发控制",
+      "level": "Advanced"
+    },
+    {
+      "slug": "16-aop-qie-mian-bian-cheng-atauthcheck-quan-xian-xiao-yan-yu-atratelimit-xian-liu-lan-jie",
+      "title": "AOP 切面编程：@AuthCheck 权限校验与 @RateLimit 限流拦截",
+      "file": "16-aop-qie-mian-bian-cheng-atauthcheck-quan-xian-xiao-yan-yu-atratelimit-xian-liu-lan-jie.md",
+      "section": "Deep Dive",
+      "group": "后端核心：限流与并发控制",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "17-qian-duan-xiang-mu-jia-gou-vue-3-typescript-element-plus-echarts",
+      "title": "前端项目架构：Vue 3 + TypeScript + Element Plus + ECharts",
+      "file": "17-qian-duan-xiang-mu-jia-gou-vue-3-typescript-element-plus-echarts.md",
+      "section": "Deep Dive",
+      "group": "前端核心：架构与页面",
+      "level": "Beginner"
+    },
+    {
+      "slug": "18-tu-biao-chuang-jian-ye-mian-biao-dan-xiao-yan-tuo-zhuai-shang-chuan-yu-yi-bu-ren-wu-zhuang-tai-gen-zong",
+      "title": "图表创建页面：表单校验、拖拽上传与异步任务状态跟踪",
+      "file": "18-tu-biao-chuang-jian-ye-mian-biao-dan-xiao-yan-tuo-zhuai-shang-chuan-yu-yi-bu-ren-wu-zhuang-tai-gen-zong.md",
+      "section": "Deep Dive",
+      "group": "前端核心：架构与页面",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "19-websocket-ke-hu-duan-feng-zhuang-zhi-shu-tui-bi-zhong-lian-xin-tiao-bao-huo-yu-zu-jian-xie-zai-qing-li",
+      "title": "WebSocket 客户端封装：指数退避重连、心跳保活与组件卸载清理",
+      "file": "19-websocket-ke-hu-duan-feng-zhuang-zhi-shu-tui-bi-zhong-lian-xin-tiao-bao-huo-yu-zu-jian-xie-zai-qing-li.md",
+      "section": "Deep Dive",
+      "group": "前端核心：架构与页面",
+      "level": "Advanced"
+    },
+    {
+      "slug": "20-ke-tuo-zhuai-yi-biao-pan-bian-ji-qi-css-transform-gpu-jia-su-wu-xian-hua-bu-yu-bu-ju-chi-jiu-hua",
+      "title": "可拖拽仪表盘编辑器：CSS transform GPU 加速、无限画布与布局持久化",
+      "file": "20-ke-tuo-zhuai-yi-biao-pan-bian-ji-qi-css-transform-gpu-jia-su-wu-xian-hua-bu-yu-bu-ju-chi-jiu-hua.md",
+      "section": "Deep Dive",
+      "group": "前端核心：架构与页面",
+      "level": "Advanced"
+    },
+    {
+      "slug": "21-tu-biao-zai-xian-bian-ji-qi-json-shi-shi-bian-ji-echarts-an-quan-xuan-ran-yu-wei-xian-zi-duan-guo-lu",
+      "title": "图表在线编辑器：JSON 实时编辑、ECharts 安全渲染与危险字段过滤",
+      "file": "21-tu-biao-zai-xian-bian-ji-qi-json-shi-shi-bian-ji-echarts-an-quan-xuan-ran-yu-wei-xian-zi-duan-guo-lu.md",
+      "section": "Deep Dive",
+      "group": "前端核心：架构与页面",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "22-lun-xun-ce-lue-you-hua-zhi-shu-tui-bi-suan-fa-yu-page-visibility-api-zan-ting-hui-fu",
+      "title": "轮询策略优化：指数退避算法与 Page Visibility API 暂停/恢复",
+      "file": "22-lun-xun-ce-lue-you-hua-zhi-shu-tui-bi-suan-fa-yu-page-visibility-api-zan-ting-hui-fu.md",
+      "section": "Deep Dive",
+      "group": "前端核心：架构与页面",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "23-guan-li-hou-tai-yong-hu-guan-li-tu-biao-shen-ji-yu-fen-bu-shi-xian-liu-jian-kong",
+      "title": "管理后台：用户管理、图表审计与分布式限流监控",
+      "file": "23-guan-li-hou-tai-yong-hu-guan-li-tu-biao-shen-ji-yu-fen-bu-shi-xian-liu-jian-kong.md",
+      "section": "Deep Dive",
+      "group": "运维管理与最佳实践",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "24-an-quan-zui-jia-shi-jian-bcrypt-mi-ma-ha-xi-session-jian-quan-san-ji-rong-cuo-xuan-ran-yu-fang-pa-chong",
+      "title": "安全最佳实践：BCrypt 密码哈希、Session 鉴权、三级容错渲染与防爬虫",
+      "file": "24-an-quan-zui-jia-shi-jian-bcrypt-mi-ma-ha-xi-session-jian-quan-san-ji-rong-cuo-xuan-ran-yu-fang-pa-chong.md",
+      "section": "Deep Dive",
+      "group": "运维管理与最佳实践",
+      "level": "Intermediate"
+    },
+    {
+      "slug": "25-xing-neng-you-hua-quan-jing-xiao-xi-ke-kao-tou-di-dong-tai-fen-biao-tuo-zhuai-60fps-yu-wu-xiao-qing-qiu-jian-shao-60",
+      "title": "性能优化全景：消息可靠投递、动态分表、拖拽 60fps 与无效请求减少 60%",
+      "file": "25-xing-neng-you-hua-quan-jing-xiao-xi-ke-kao-tou-di-dong-tai-fen-biao-tuo-zhuai-60fps-yu-wu-xiao-qing-qiu-jian-shao-60.md",
+      "section": "Deep Dive",
+      "group": "运维管理与最佳实践",
+      "level": "Advanced"
+    }
+  ]
+}

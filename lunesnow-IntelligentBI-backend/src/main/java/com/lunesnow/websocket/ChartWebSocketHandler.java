@@ -39,19 +39,18 @@ public class ChartWebSocketHandler extends TextWebSocketHandler {
         Long userId = parseUserId(query);
 
         if (userId == null || userId <= 0) {
-            // 无效的 userId，拒绝连接
-            log.warn("WebSocket 连接被拒绝: 无效的 userId 参数, sessionId={}", session.getId());
+            log.warn("[WS][CONNECT] 连接被拒绝: 无效userId, sessionId={}", session.getId());
             try {
                 session.close(CloseStatus.POLICY_VIOLATION.withReason("Invalid userId"));
             } catch (IOException e) {
-                log.error("关闭无效 WebSocket 连接失败", e);
+                log.error("[WS][CONNECT] 关闭无效连接失败", e);
             }
             return;
         }
 
-        USER_SESSIONS.put(userId, session); // 存储用户会话信息
-        SESSION_USER_MAP.put(session.getId(), userId);  // 存储会话信息
-        log.info("WebSocket 连接建立: userId={}, sessionId={}", userId, session.getId());
+        USER_SESSIONS.put(userId, session);
+        SESSION_USER_MAP.put(session.getId(), userId);
+        log.info("[WS][CONNECT] 连接建立: userId={}, sessionId={}", userId, session.getId());
     }
 
     @Override
@@ -62,7 +61,7 @@ public class ChartWebSocketHandler extends TextWebSocketHandler {
         Long userId = SESSION_USER_MAP.remove(session.getId());
         if (userId != null) {
             USER_SESSIONS.remove(userId);
-            log.info("WebSocket 连接关闭: userId={}, status={}", userId, status);
+            log.info("[WS][DISCONNECT] 连接关闭: userId={}, status={}", userId, status);
         }
     }
 
@@ -77,7 +76,7 @@ public class ChartWebSocketHandler extends TextWebSocketHandler {
             try {
                 session.sendMessage(new TextMessage("pong"));
             } catch (IOException e) {
-                log.error("WebSocket 心跳响应失败", e);
+                log.error("[WS][HEARTBEAT] 心跳响应失败", e);
             }
         }
     }
@@ -93,12 +92,10 @@ public class ChartWebSocketHandler extends TextWebSocketHandler {
         if (session != null && session.isOpen()) {
             try {
                 session.sendMessage(new TextMessage(message));
-                log.info("WebSocket 消息推送成功: userId={}, message={}", userId, message);
+                log.info("[WS][SEND] 消息已推送: userId={}", userId);
             } catch (IOException e) {
-                log.error("WebSocket 消息推送失败: userId={}", userId, e);
+                log.error("[WS][SEND] 推送失败: userId={}", userId, e);
             }
-        } else {
-            log.debug("WebSocket 用户不在线: userId={}", userId);
         }
     }
 
@@ -106,6 +103,7 @@ public class ChartWebSocketHandler extends TextWebSocketHandler {
      * 推送图表生成成功通知
      */
     public void notifyChartSuccess(Long userId, Long chartId, String chartName) {
+        log.info("[WS][NOTIFY] 推送成功通知: userId={}, chartId={}, chartName={}", userId, chartId, chartName);
         String message = String.format(
                 "{\"type\":\"success\",\"chartId\":%d,\"chartName\":\"%s\",\"message\":\"图表生成成功\"}",
                 chartId, chartName != null ? chartName : "未知图表"
@@ -117,6 +115,7 @@ public class ChartWebSocketHandler extends TextWebSocketHandler {
      * 推送图表生成失败通知
      */
     public void notifyChartFailure(Long userId, Long chartId, String chartName, String reason) {
+        log.info("[WS][NOTIFY] 推送失败通知: userId={}, chartId={}, chartName={}", userId, chartId, chartName);
         String message = String.format(
                 "{\"type\":\"failure\",\"chartId\":%d,\"chartName\":\"%s\",\"message\":\"图表生成失败: %s\"}",
                 chartId, chartName != null ? chartName : "未知图表", reason != null ? reason : "未知原因"
