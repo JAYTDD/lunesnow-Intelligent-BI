@@ -11,150 +11,149 @@
     </div>
 
     <template v-else>
-    <!-- 顶部欢迎区 - 左对齐 -->
-    <section class="hero">
-      <div class="hero-content">
-        <div class="hero-badge">
-          <span class="badge-dot"></span>
-          数据看板
+      <!-- 顶部欢迎区 - 左对齐 -->
+      <section class="hero">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <span class="badge-dot"></span>
+            数据看板
+          </div>
+          <h1 class="hero-title">你好，{{ loginUserStore.loginUser.userName || '用户' }}</h1>
+          <p class="hero-desc">管理和追踪你的 AI 图表生成任务</p>
         </div>
-        <h1 class="hero-title">
-          你好，{{ loginUserStore.loginUser.userName || '用户' }}
-        </h1>
-        <p class="hero-desc">管理和追踪你的 AI 图表生成任务</p>
-      </div>
-      <button class="hero-btn" @click="router.push('/add/chart')">
-        <span class="btn-text">新建图表</span>
-        <span class="btn-icon">
-          <el-icon :size="16"><Plus /></el-icon>
-        </span>
-      </button>
-    </section>
-
-    <!-- 统计数据 - 不对称布局 -->
-    <section class="stats-section">
-      <div class="stats-grid">
-        <!-- 大卡片：总数 -->
-        <div class="stat-card stat-card--large">
-          <div class="stat-card__header">
-            <span class="stat-card__label">图表总数</span>
-            <span class="stat-card__icon stat-card__icon--blue">
-              <el-icon :size="18"><DataBoard /></el-icon>
-            </span>
-          </div>
-          <div class="stat-card__value">{{ animatedTotal }}</div>
-          <div class="stat-card__footer">
-            <span class="stat-card__trend stat-card__trend--up">
-              <el-icon :size="12"><Top /></el-icon>
-              活跃
-            </span>
-            <span class="stat-card__sub">所有状态</span>
-          </div>
-        </div>
-
-        <!-- 右侧小卡片组 -->
-        <div class="stat-side">
-          <div class="stat-card stat-card--small">
-            <div class="stat-card__header">
-              <span class="stat-card__label">成功</span>
-              <span class="stat-card__icon stat-card__icon--green">
-                <el-icon :size="14"><CircleCheck /></el-icon>
-              </span>
-            </div>
-            <div class="stat-card__value stat-card__value--small">{{ animatedSuccess }}</div>
-          </div>
-
-          <div class="stat-card stat-card--small">
-            <div class="stat-card__header">
-              <span class="stat-card__label">进行中</span>
-              <span class="stat-card__icon stat-card__icon--amber">
-                <el-icon :size="14"><Loading /></el-icon>
-              </span>
-            </div>
-            <div class="stat-card__value stat-card__value--small">{{ animatedRunning }}</div>
-          </div>
-
-          <div class="stat-card stat-card--small">
-            <div class="stat-card__header">
-              <span class="stat-card__label">成功率</span>
-              <span class="stat-card__icon stat-card__icon--emerald">
-                <el-icon :size="14"><TrendCharts /></el-icon>
-              </span>
-            </div>
-            <div class="stat-card__value stat-card__value--small">{{ animatedRate }}%</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 最近图表 - Bento 风格 -->
-    <section class="recent-section">
-      <div class="section-header">
-        <h2 class="section-title">最近生成</h2>
-        <button class="section-link" @click="router.push('/my/charts')">
-          查看全部
-          <el-icon :size="14"><ArrowRight /></el-icon>
+        <button class="hero-btn" @click="router.push('/add/chart')">
+          <span class="btn-text">新建图表</span>
+          <span class="btn-icon">
+            <el-icon :size="16"><Plus /></el-icon>
+          </span>
         </button>
-      </div>
+      </section>
 
-      <div v-if="loading" class="skeleton-grid">
-        <div v-for="i in 5" :key="i" class="skeleton-card">
-          <div class="skeleton-chart"></div>
-          <div class="skeleton-info">
-            <div class="skeleton-line skeleton-line--long"></div>
-            <div class="skeleton-line skeleton-line--short"></div>
-          </div>
-        </div>
-      </div>
-
-      <div v-else-if="recentCharts.length === 0" class="empty-state">
-        <div class="empty-icon">
-          <el-icon :size="48" color="#d1d5db"><PieChart /></el-icon>
-        </div>
-        <p class="empty-title">还没有图表</p>
-        <p class="empty-desc">上传数据文件，让 AI 为你生成可视化图表</p>
-        <button class="empty-btn" @click="router.push('/add/chart')">
-          创建第一个图表
-        </button>
-      </div>
-
-      <div v-else class="charts-grid">
-        <div
-          v-for="(chart, index) in recentCharts"
-          :key="chart.id"
-          class="chart-card"
-          :style="{ '--delay': `${index * 60}ms` }"
-          @click="router.push(`/chart/detail/${chart.id}`)"
-        >
-          <div class="chart-card__visual">
-            <div
-              v-if="chart.status === 'succeed'"
-              :id="`recent-chart-${chart.id}`"
-              class="mini-chart"
-            ></div>
-            <div v-else-if="chart.status === 'waiting' || chart.status === 'running'" class="chart-status">
-              <span class="status-pulse status-pulse--amber"></span>
-              <span class="status-text">生成中</span>
+      <!-- 统计数据 - 不对称布局 -->
+      <section class="stats-section">
+        <div class="stats-grid">
+          <!-- 大卡片：总数 -->
+          <div class="stat-card stat-card--large">
+            <div class="stat-card__header">
+              <span class="stat-card__label">图表总数</span>
+              <span class="stat-card__icon stat-card__icon--blue">
+                <el-icon :size="18"><DataBoard /></el-icon>
+              </span>
             </div>
-            <div v-else class="chart-status">
-              <span class="status-dot status-dot--red"></span>
-              <span class="status-text">失败</span>
+            <div class="stat-card__value">{{ animatedTotal }}</div>
+            <div class="stat-card__footer">
+              <span class="stat-card__trend stat-card__trend--up">
+                <el-icon :size="12"><Top /></el-icon>
+                活跃
+              </span>
+              <span class="stat-card__sub">所有状态</span>
             </div>
           </div>
 
-          <div class="chart-card__content">
-            <h3 class="chart-card__name">{{ chart.name || '未命名图表' }}</h3>
-            <div class="chart-card__meta">
-              <span class="chart-type">{{ chart.chartType }}</span>
-              <span class="chart-time">{{ formatTime(chart.createTime) }}</span>
+          <!-- 右侧小卡片组 -->
+          <div class="stat-side">
+            <div class="stat-card stat-card--small">
+              <div class="stat-card__header">
+                <span class="stat-card__label">成功</span>
+                <span class="stat-card__icon stat-card__icon--green">
+                  <el-icon :size="14"><CircleCheck /></el-icon>
+                </span>
+              </div>
+              <div class="stat-card__value stat-card__value--small">{{ animatedSuccess }}</div>
+            </div>
+
+            <div class="stat-card stat-card--small">
+              <div class="stat-card__header">
+                <span class="stat-card__label">进行中</span>
+                <span class="stat-card__icon stat-card__icon--amber">
+                  <el-icon :size="14"><Loading /></el-icon>
+                </span>
+              </div>
+              <div class="stat-card__value stat-card__value--small">{{ animatedRunning }}</div>
+            </div>
+
+            <div class="stat-card stat-card--small">
+              <div class="stat-card__header">
+                <span class="stat-card__label">成功率</span>
+                <span class="stat-card__icon stat-card__icon--emerald">
+                  <el-icon :size="14"><TrendCharts /></el-icon>
+                </span>
+              </div>
+              <div class="stat-card__value stat-card__value--small">{{ animatedRate }}%</div>
             </div>
           </div>
-
-          <!-- 悬浮指示器 -->
-          <div class="chart-card__hover"></div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <!-- 最近图表 - Bento 风格 -->
+      <section class="recent-section">
+        <div class="section-header">
+          <h2 class="section-title">最近生成</h2>
+          <button class="section-link" @click="router.push('/my/charts')">
+            查看全部
+            <el-icon :size="14"><ArrowRight /></el-icon>
+          </button>
+        </div>
+
+        <div v-if="loading" class="skeleton-grid">
+          <div v-for="i in 5" :key="i" class="skeleton-card">
+            <div class="skeleton-chart"></div>
+            <div class="skeleton-info">
+              <div class="skeleton-line skeleton-line--long"></div>
+              <div class="skeleton-line skeleton-line--short"></div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="recentCharts.length === 0" class="empty-state">
+          <div class="empty-icon">
+            <el-icon :size="48" color="#d1d5db"><PieChart /></el-icon>
+          </div>
+          <p class="empty-title">还没有图表</p>
+          <p class="empty-desc">上传数据文件，让 AI 为你生成可视化图表</p>
+          <button class="empty-btn" @click="router.push('/add/chart')">创建第一个图表</button>
+        </div>
+
+        <div v-else class="charts-grid">
+          <div
+            v-for="(chart, index) in recentCharts"
+            :key="chart.id"
+            class="chart-card"
+            :style="{ '--delay': `${index * 60}ms` }"
+            @click="router.push(`/chart/detail/${chart.id}`)"
+          >
+            <div class="chart-card__visual">
+              <div
+                v-if="chart.status === 'succeed'"
+                :id="`recent-chart-${chart.id}`"
+                class="mini-chart"
+              ></div>
+              <div
+                v-else-if="chart.status === 'waiting' || chart.status === 'running'"
+                class="chart-status"
+              >
+                <span class="status-pulse status-pulse--amber"></span>
+                <span class="status-text">生成中</span>
+              </div>
+              <div v-else class="chart-status">
+                <span class="status-dot status-dot--red"></span>
+                <span class="status-text">失败</span>
+              </div>
+            </div>
+
+            <div class="chart-card__content">
+              <h3 class="chart-card__name">{{ chart.name || '未命名图表' }}</h3>
+              <div class="chart-card__meta">
+                <span class="chart-type">{{ chart.chartType }}</span>
+                <span class="chart-time">{{ formatTime(chart.createTime) }}</span>
+              </div>
+            </div>
+
+            <!-- 悬浮指示器 -->
+            <div class="chart-card__hover"></div>
+          </div>
+        </div>
+      </section>
     </template>
   </div>
 </template>

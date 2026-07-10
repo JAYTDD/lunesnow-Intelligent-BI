@@ -28,6 +28,7 @@ export function usePolling(callback: () => Promise<boolean>, options: PollingOpt
   const isRunning = ref(false) // 是否正在运行
   const isPageVisible = ref(true) // 页面是否可见
   let ticking = false // 防止 tick 并发
+  let requestCount = 0 // 已发出的真实轮询请求计数（用于浏览器自测）
 
   // 调度下一次轮询
   const scheduleNext = () => {
@@ -41,13 +42,18 @@ export function usePolling(callback: () => Promise<boolean>, options: PollingOpt
 
   // 执行轮询
   const tick = async () => {
-    // 页面不可见或正在执行中，跳过
-    if (!isPageVisible.value || ticking) {
-      console.log('[轮询] 跳过（不可见或正在执行）')
+    // 页面不可见或正在执行中，跳过（区分原因，便于自测观察）
+    if (!isPageVisible.value) {
+      console.log('[轮询] 跳过：页面不可见（隐藏期不计数）')
+      return
+    }
+    if (ticking) {
+      console.log('[轮询] 跳过：上一次回调仍在执行')
       return
     }
     ticking = true // 设置正在执行
-    console.log(`[轮询] 执行，当前间隔: ${currentInterval.value}ms`)
+    requestCount++ // 真正发出一次请求时计数 +1
+    console.log(`[轮询] #${requestCount} 执行，当前间隔: ${currentInterval.value}ms`)
     try {
       // 执行回调函数，返回 true 表示停止轮询
       const shouldStop = await callback()
@@ -56,8 +62,8 @@ export function usePolling(callback: () => Promise<boolean>, options: PollingOpt
         stop()
         return
       }
-      // 回调成功（返回 false），重置间隔，保持快速轮询
-      currentInterval.value = interval
+      // 回调成功（返回 false，任务仍进行中）：指数退避，逐步拉长间隔以降低无效请求
+      currentInterval.value = Math.min(currentInterval.value * backoff, maxInterval)
     } catch (error) {
       console.log('[轮询] 回调出错：', error)
       currentInterval.value = Math.min(currentInterval.value * backoff, maxInterval)
@@ -97,7 +103,7 @@ export function usePolling(callback: () => Promise<boolean>, options: PollingOpt
 
   // 暂停（页面不可见时）
   const pause = () => {
-    console.log('[轮询] 暂停（页面不可见）')
+    console.log(`[轮询] 暂停（页面不可见），本次已发请求数: ${requestCount}`)
     if (timer.value) {
       clearTimeout(timer.value)
       timer.value = undefined
@@ -107,7 +113,7 @@ export function usePolling(callback: () => Promise<boolean>, options: PollingOpt
   // 恢复（页面可见时）
   const resume = () => {
     if (isRunning.value && !timer.value) {
-      console.log('[轮询] 恢复（页面可见），重置间隔并立即请求')
+      console.log(`[轮询] 恢复（页面可见），重置间隔并立即请求（累计已发: ${requestCount}）`)
       // 重置间隔，从初始值重新开始
       currentInterval.value = interval
       // 立即执行一次，等完成后再调度下一次

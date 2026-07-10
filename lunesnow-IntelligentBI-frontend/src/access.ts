@@ -12,7 +12,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 首次加载 / 刷新时：尝试从后端恢复登录会话（cookie）
-  if (loginUserStore.loginUser.userName === '未登录' && !loginUserStore.loginUser.id) {
+  if (!loginUserStore.loginUser.id) {
     try {
       // 尝试从后端获取登录用户信息
       await loginUserStore.fetchLoginUser()
@@ -22,7 +22,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 尝试恢复后仍未登录 → 跳转登录页
-  if (loginUserStore.loginUser.userName === '未登录' && !loginUserStore.loginUser.id) {
+  if (!loginUserStore.loginUser.id) {
     next(`/user/login?redirect=${to.fullPath}`)
     return
   }

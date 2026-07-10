@@ -4,8 +4,13 @@
     <div class="brand">
       <div class="brand-logo">
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <rect width="28" height="28" rx="8" fill="#18181b"/>
-          <path d="M8 18V12M12 18V10M16 18V14M20 18V8" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"/>
+          <rect width="28" height="28" rx="8" fill="#18181b" />
+          <path
+            d="M8 18V12M12 18V10M16 18V14M20 18V8"
+            stroke="#22c55e"
+            stroke-width="2.5"
+            stroke-linecap="round"
+          />
         </svg>
       </div>
       <div class="brand-text">
@@ -45,7 +50,9 @@
         </div>
         <div class="user-detail">
           <span class="user-name">{{ loginUserStore.loginUser.userName || '未登录' }}</span>
-          <span class="user-role">{{ loginUserStore.loginUser.userRole === 'admin' ? '管理员' : '用户' }}</span>
+          <span class="user-role">{{
+            loginUserStore.loginUser.userRole === 'admin' ? '管理员' : '用户'
+          }}</span>
         </div>
       </div>
       <button class="logout-btn" @click="handleLogout" title="退出登录">
@@ -62,7 +69,15 @@ import { ElMessage } from 'element-plus'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import { userLogout } from '@/api/userController'
 import type { Component } from 'vue'
-import { HomeFilled, PieChart, User, SwitchButton, DataBoard, Lock, Plus } from '@element-plus/icons-vue'
+import {
+  HomeFilled,
+  PieChart,
+  User,
+  SwitchButton,
+  DataBoard,
+  Lock,
+  Plus,
+} from '@element-plus/icons-vue'
 
 interface MenuItem {
   path: string
@@ -123,7 +138,7 @@ const goToProfile = () => {
 const handleLogout = async () => {
   try {
     await userLogout()
-    loginUserStore.setLoginUser({ userName: '未登录' })
+    loginUserStore.clearLoginUser()
     ElMessage.success('已退出登录')
     router.push('/user/login')
   } catch {
