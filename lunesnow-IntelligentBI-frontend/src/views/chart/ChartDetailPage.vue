@@ -245,7 +245,7 @@ import {
 import { getChartVoById, getChartData, getColumnDistinctValues } from '@/api/chartController'
 import { safeRenderChart } from '@/utils/chartValidator'
 import ChartEditor from '@/components/ChartEditor.vue'
-import * as echarts from 'echarts'
+import * as echarts from '@/utils/echarts'
 
 const route = useRoute()
 const router = useRouter()

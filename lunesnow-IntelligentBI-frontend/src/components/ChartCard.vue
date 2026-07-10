@@ -36,16 +36,16 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { Rank, Refresh, Close, BottomRight } from '@element-plus/icons-vue'
-import * as echarts from 'echarts'
+import * as echarts from '@/utils/echarts'
 import { useDraggable } from '@/composables/useDraggable'
 import type { DashboardItem } from '@/types/dashboard'
 import { safeParseChartConfig } from '@/utils/chartValidator'
 
 const props = defineProps<{ item: DashboardItem; zoom: number }>()
 const emit = defineEmits<{
-  'update:position': [x: number, y: number]
-  'update:size': [w: number, h: number]
-  remove: [id: string]
+  'update:position': [x: number, y: number] // 更新位置
+  'update:size': [w: number, h: number] // 更新大小
+  remove: [id: string] // 删除卡片
 }>()
 
 const rootRef = ref<HTMLElement>()
@@ -73,7 +73,7 @@ watch(
 )
 
 // ==================== 拖拽缩放 ====================
-let resizeRafId = 0
+let resizeRafId = 0 // 缩放动画帧 ID
 let resizeState: {
   startX: number
   startY: number
@@ -83,6 +83,7 @@ let resizeState: {
   pendingH: number
 } | null = null
 
+// 开始缩放
 const startResize = (e: MouseEvent) => {
   if (e.button !== 0) return
   const el = rootRef.value
@@ -102,6 +103,7 @@ const startResize = (e: MouseEvent) => {
   document.body.style.cursor = 'nwse-resize'
 }
 
+// 缩放移动时更新尺寸
 const onResizeMove = (e: MouseEvent) => {
   if (!resizeState || !rootRef.value) return
   const zoom = props.zoom
@@ -121,6 +123,7 @@ const onResizeMove = (e: MouseEvent) => {
   }
 }
 
+// 缩放结束时更新尺寸
 const onResizeEnd = () => {
   if (resizeRafId) {
     cancelAnimationFrame(resizeRafId)
@@ -167,11 +170,21 @@ const onRefresh = () => chartInstance?.resize()
 const handleWinResize = () => chartInstance?.resize()
 
 // 尺寸/配置变化时同步图表
-watch(() => props.item.width, () => chartInstance?.resize())
-watch(() => props.item.height, () => chartInstance?.resize())
-watch(() => props.item.genChart, () => nextTick(renderChart))
+watch(
+  () => props.item.width,
+  () => chartInstance?.resize(),
+)
+watch(
+  () => props.item.height,
+  () => chartInstance?.resize(),
+)
+watch(
+  () => props.item.genChart,
+  () => nextTick(renderChart),
+)
 
 onMounted(() => {
+  // 初始化时绑定拖拽
   if (rootRef.value && headerRef.value) bind(rootRef.value, headerRef.value)
   nextTick(renderChart)
   window.addEventListener('resize', handleWinResize)

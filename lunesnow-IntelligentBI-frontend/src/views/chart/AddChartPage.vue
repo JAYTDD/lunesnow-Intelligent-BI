@@ -75,7 +75,7 @@
           </div>
         </div>
 
-        <!-- 提交按钮 -->
+        <!-- 提交按钮：重置 / 生成图表 -->
         <div class="form-actions">
           <el-button @click="handleReset">重置</el-button>
           <el-button type="primary" :loading="submitting" @click="handleSubmit">
@@ -89,6 +89,10 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 新建图表页面
+ * 负责收集图表基本信息与数据文件，提交给后端 AI 生成图表
+ */
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules, ElMessageBox } from 'element-plus'
@@ -96,123 +100,134 @@ import type { UploadFile } from 'element-plus'
 import { UploadFilled, Cpu } from '@element-plus/icons-vue'
 import myAxios from '@/request'
 
-const router = useRouter()
+const router = useRouter() // 路由实例
 
-const formRef = ref<FormInstance>()
-const uploadRef = ref()
-const submitting = ref(false)
+const formRef = ref<FormInstance>() // 表单引用
+const uploadRef = ref() // 上传组件引用
+const submitting = ref(false) // 提交中状态
 
 const form = reactive<API.getChartByAIParams>({
-  name: '',
-  chartType: '',
-  goal: '',
+  name: '', // 图表名称
+  chartType: '', // 图表类型
+  goal: '', // 分析目标
 })
 
-const selectedFile = ref<File | null>(null)
+const selectedFile = ref<File | null>(null) // 选中的文件
 
 const rules: FormRules = {
-  name: [{ required: true, message: '请输入图表名称', trigger: 'blur' }],
-  chartType: [{ required: true, message: '请选择图表类型', trigger: 'change' }],
-  goal: [{ required: true, message: '请输入分析目标', trigger: 'blur' }],
+  name: [{ required: true, message: '请输入图表名称', trigger: 'blur' }], // 名称必填
+  chartType: [{ required: true, message: '请选择图表类型', trigger: 'change' }], // 类型必填
+  goal: [{ required: true, message: '请输入分析目标', trigger: 'blur' }], // 目标必填
 }
 
-const ALLOWED_TYPES = ['.xlsx', '.xls', '.csv']
+const ALLOWED_TYPES = ['.xlsx', '.xls', '.csv'] // 允许的文件后缀
 const ALLOWED_MIME = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
   'application/vnd.ms-excel', // .xls
   'text/csv', // .csv
   'application/csv', // .csv
 ]
-const MAX_SIZE = 2 * 1024 * 1024
+const MAX_SIZE = 2 * 1024 * 1024 // 最大文件大小 2MB
 
+/** 文件选择变化回调 */
 const handleFileChange = (uploadFile: UploadFile) => {
-  const file = uploadFile.raw
-  if (!file) return
+  const file = uploadFile.raw // 获取原始文件对象
+  if (!file) return // 无原始文件则跳过
 
-  const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
+  const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase() // 提取后缀
 
   // 1. 后缀名校验
   if (!ALLOWED_TYPES.includes(ext)) {
+    // 后缀不在白名单
     ElMessage.error(`文件格式不支持，仅允许 ${ALLOWED_TYPES.join('、')} 格式`)
-    uploadRef.value?.clearFiles()
+    uploadRef.value?.clearFiles() // 清除已选文件
     return
   }
 
   // 2. MIME type 校验（防止改后缀绕过）
   if (file.type && !ALLOWED_MIME.includes(file.type)) {
+    // 内容与后缀不匹配
     ElMessage.error('文件内容与后缀不匹配，请确认文件未被修改')
-    uploadRef.value?.clearFiles()
+    uploadRef.value?.clearFiles() // 清除已选文件
     return
   }
 
   // 3. 文件大小校验
   if (file.size === 0) {
+    // 空文件
     ElMessage.error('文件为空，请选择有效的数据文件')
-    uploadRef.value?.clearFiles()
+    uploadRef.value?.clearFiles() // 清除已选文件
     return
   }
 
   if (file.size > MAX_SIZE) {
+    // 超过大小限制
     ElMessage.error(`文件大小超过限制（最大 ${MAX_SIZE / 1024 / 1024}MB）`)
-    uploadRef.value?.clearFiles()
+    uploadRef.value?.clearFiles() // 清除已选文件
     return
   }
 
-  selectedFile.value = uploadFile.raw || null
+  selectedFile.value = uploadFile.raw || null // 校验通过，保存文件引用
 }
 
+/** 移除文件回调 */
 const handleRemove = () => {
   ElMessageBox.confirm('确认删除选中的文件吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning',
   }).then(() => {
-    selectedFile.value = null
+    selectedFile.value = null // 确认后清空文件引用
   })
 }
 
+/** 提交表单：校验 + 上传文件生成图表 */
 const handleSubmit = async () => {
-  if (!formRef.value) return
+  if (!formRef.value) return // 表单引用不存在则跳过
   await formRef.value.validate(async (valid) => {
-    if (!valid) return
+    if (!valid) return // 表单校验不通过则跳过
 
     if (!selectedFile.value) {
+      // 未选择文件
       ElMessage.error('请选择 Excel/CSV 文件')
       return
     }
 
-    submitting.value = true
+    submitting.value = true // 进入提交状态
 
     try {
-      const formDataFile = new FormData()
-      formDataFile.append('file', selectedFile.value)
-      formDataFile.append('name', form.name)
-      formDataFile.append('chartType', form.chartType)
-      formDataFile.append('goal', form.goal)
+      const formDataFile = new FormData() // 构建表单数据
+      formDataFile.append('file', selectedFile.value) // 追加文件
+      formDataFile.append('name', form.name) // 追加名称
+      formDataFile.append('chartType', form.chartType) // 追加图表类型
+      formDataFile.append('goal', form.goal) // 追加分析目标
 
+      // 上传文件生成图表
       const res = await myAxios('/chart/gen', {
         method: 'POST',
         data: formDataFile,
       })
       if (res.code === 0) {
+        // 提交成功
         ElMessage.success('图表已提交，正在生成中')
-        router.push('/my/charts')
+        router.push('/my/charts') // 跳转我的图表页
       }
     } catch (error: unknown) {
-      ElMessage.error(error instanceof Error ? error.message : '生成失败')
+      ElMessage.error(error instanceof Error ? error.message : '生成失败') // 提交失败提示
     } finally {
-      submitting.value = false
+      submitting.value = false // 无论成败都结束提交状态
     }
   })
 }
 
+/** 重置表单 */
 const handleReset = () => {
-  form.name = ''
-  form.chartType = ''
-  form.goal = ''
-  selectedFile.value = null
-  uploadRef.value?.clearFiles()
-  formRef.value?.resetFields()
+  form.name = '' // 清空名称
+  form.chartType = '' // 清空图表类型
+  form.goal = '' // 清空分析目标
+  selectedFile.value = null // 清空文件引用
+  uploadRef.value?.clearFiles() // 清除上传组件文件
+  formRef.value?.resetFields() // 重置表单校验状态
 }
 </script>
 

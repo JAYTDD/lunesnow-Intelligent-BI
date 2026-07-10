@@ -52,7 +52,7 @@ import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { safeParseChartConfig, validateEChartsOption } from '@/utils/chartValidator'
 import { editChartConfig } from '@/api/chartController'
-import * as echarts from 'echarts'
+import * as echarts from '@/utils/echarts'
 
 interface Props {
   visible: boolean // 是否显示对话框

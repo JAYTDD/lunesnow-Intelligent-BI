@@ -14,9 +14,9 @@ public enum FileUploadBizEnum {
 
     USER_AVATAR("用户头像", "user_avatar");
 
-    private final String text;
+    private final String text;  // 枚举描述
 
-    private final String value;
+    private final String value;  // 枚举值
 
     FileUploadBizEnum(String text, String value) {
         this.text = text;

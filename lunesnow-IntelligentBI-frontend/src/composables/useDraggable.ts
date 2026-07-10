@@ -9,49 +9,49 @@
 
 import { ref, onUnmounted, type Ref } from 'vue'
 
+// 拖拽参数
 interface DraggableOptions {
-  /** 初始位置 x */
-  initX?: number
-  /** 初始位置 y */
-  initY?: number
-  /** 拖拽结束回调 */
-  onDragEnd?: (x: number, y: number) => void
-  /** 拖拽开始回调 */
-  onDragStart?: (x: number, y: number) => void
-  /** 是否启用拖拽 */
-  disabled?: boolean
-  /** 获取当前画布缩放比例，用于换算拖拽位移 */
-  getZoom?: () => number
-  /** 命中该元素时不触发拖拽（如操作按钮） */
-  ignore?: (target: EventTarget | null) => boolean
+  initX?: number // 初始位置 x
+  initY?: number // 初始位置 y
+  onDragEnd?: (x: number, y: number) => void // 拖拽结束回调
+  onDragStart?: (x: number, y: number) => void // 拖拽开始回调
+  disabled?: boolean // 是否启用拖拽
+  getZoom?: () => number // 获取当前画布缩放比例，用于换算拖拽位移
+  ignore?: (target: EventTarget | null) => boolean // 命中该元素时不触发拖拽（如操作按钮）
 }
 
+// 拖拽返回值
 interface DraggableReturn {
-  /** 当前 x 坐标 */
-  x: Ref<number>
-  /** 当前 y 坐标 */
-  y: Ref<number>
-  /** 是否正在拖拽 */
-  isDragging: Ref<boolean>
-  /** 绑定：target=被移动元素，handle=触发拖拽元素(默认同 target) */
-  bind: (target: HTMLElement, handle?: HTMLElement) => void
-  /** 设置位置 */
-  setPosition: (x: number, y: number) => void
+  x: Ref<number> // 当前 x 坐标
+  y: Ref<number> // 当前 y 坐标
+  isDragging: Ref<boolean> // 是否正在拖拽
+  bind: (target: HTMLElement, handle?: HTMLElement) => void // 绑定：target=被移动元素，handle=触发拖拽元素(默认同 target)
+  setPosition: (x: number, y: number) => void // 设置位置
 }
 
+// 拖拽实现
 export function useDraggable(options: DraggableOptions = {}): DraggableReturn {
-  const { initX = 0, initY = 0, onDragEnd, onDragStart, disabled = false, getZoom, ignore } = options
+  // 解构参数
+  const {
+    initX = 0,
+    initY = 0,
+    onDragEnd,
+    onDragStart,
+    disabled = false,
+    getZoom,
+    ignore,
+  } = options
 
-  const x = ref(initX)
-  const y = ref(initY)
-  const isDragging = ref(false)
+  const x = ref(initX) // 当前 x 坐标
+  const y = ref(initY) // 当前 y 坐标
+  const isDragging = ref(false) // 是否正在拖拽
 
-  let targetEl: HTMLElement | null = null
-  let handleEl: HTMLElement | null = null
-  let startX = 0
-  let startY = 0
-  let startTranslateX = 0
-  let startTranslateY = 0
+  let targetEl: HTMLElement | null = null // 拖拽目标元素
+  let handleEl: HTMLElement | null = null // 触发拖拽元素(默认同 target)
+  let startX = 0 // 拖拽开始时 x 坐标
+  let startY = 0 // 拖拽开始时 y 坐标
+  let startTranslateX = 0 // 拖拽开始时 transform 位置 x
+  let startTranslateY = 0 // 拖拽开始时 transform 位置 y
 
   // 更新元素位置（使用 transform，GPU 加速，避免重排）
   const updatePosition = () => {
@@ -124,7 +124,7 @@ export function useDraggable(options: DraggableOptions = {}): DraggableReturn {
   const bind = (target: HTMLElement, handle?: HTMLElement) => {
     targetEl = target
     handleEl = handle ?? target
-    handleEl.style.cursor = 'grab'
+    handleEl.style.cursor = 'grab' // 鼠标指针样式
     handleEl.addEventListener('mousedown', handleMouseDown)
     updatePosition()
   }

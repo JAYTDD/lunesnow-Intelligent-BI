@@ -1,5 +1,16 @@
 <template>
   <div class="page-shell">
+    <!-- 组件错误兜底 -->
+    <div v-if="pageError" class="error-fallback">
+      <el-icon :size="64" color="#f56c6c"><CircleCloseFilled /></el-icon>
+      <h3>页面渲染出错</h3>
+      <p class="error-message">{{ pageError.message }}</p>
+      <el-button type="primary" @click="handlePageRetry">
+        <el-icon><Refresh /></el-icon> 重新加载
+      </el-button>
+    </div>
+
+    <template v-else>
     <div class="page-header">
       <div class="header-content">
         <h1 class="page-title">我的图表</h1>
@@ -135,14 +146,15 @@
         />
       </div>
     </el-card>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick, onErrorCaptured } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Loading, CircleCloseFilled, Search } from '@element-plus/icons-vue'
+import { Loading, CircleCloseFilled, Search, Refresh } from '@element-plus/icons-vue'
 import {
   listMyChartVoByPage,
   deleteChart,
@@ -151,9 +163,22 @@ import {
 } from '@/api/chartController'
 import { safeRenderChart } from '@/utils/chartValidator'
 import { usePolling } from '@/composables/usePolling'
-import * as echarts from 'echarts'
+import * as echarts from '@/utils/echarts'
 
 const router = useRouter()
+
+const pageError = ref<Error | null>(null)
+
+onErrorCaptured((err) => {
+  console.error('图表列表页渲染错误:', err)
+  pageError.value = err
+  return false // 阻止冒泡到 App，避免全应用白屏
+})
+
+const handlePageRetry = () => {
+  pageError.value = null
+  loadChartList()
+}
 
 const chartTypeTagMap: Record<string, string> = {
   折线图: 'primary',
@@ -184,10 +209,11 @@ const searchForm = reactive<API.ChartQueryRequest>({
   sortOrder: 'descend',
 })
 
-const chartTypeValue = ref('')
-const sortFieldValue = ref('createTime')
-const sortOrderValue = ref('descend')
+const chartTypeValue = ref('') // 图表类型
+const sortFieldValue = ref('createTime') // 排序字段
+const sortOrderValue = ref('descend') // 排序顺序
 
+// 图表类型
 const chartTypeOptions = [
   { value: '折线图', label: '折线图' },
   { value: '柱状图', label: '柱状图' },
@@ -195,26 +221,26 @@ const chartTypeOptions = [
   { value: '散点图', label: '散点图' },
   { value: '雷达图', label: '雷达图' },
 ]
-
+// 排序字段
 const sortFieldOptions = [
   { value: 'createTime', label: '创建时间' },
   { value: 'updateTime', label: '更新时间' },
 ]
-
+// 排序顺序
 const sortOrderOptions = [
   { value: 'descend', label: '降序' },
   { value: 'ascend', label: '升序' },
 ]
 
-const currentPage = ref(1)
+const currentPage = ref(1) // 当前页码
 const pageSize = ref(10)
 const total = ref(0)
 
 const tableData = ref<API.ChartVO[]>([])
 const loading = ref(false)
 
-const chartObserver = ref<IntersectionObserver | null>(null)
-const resizeHandlers = ref<Map<string, () => void>>(new Map())
+const chartObserver = ref<IntersectionObserver | null>(null) // 观察者实例
+const resizeHandlers = ref<Map<string, () => void>>(new Map()) // 存放图表的 resize 函数
 
 // 释放所有图表
 const disposeAllCharts = () => {
@@ -248,9 +274,9 @@ const renderChart = (chart: API.ChartVO) => {
     const myChart = echarts.init(chartDom)
     myChart.setOption(option)
 
-    const handler = () => myChart.resize()
-    window.addEventListener('resize', handler)
-    resizeHandlers.value.set(String(chart.id), handler)
+    const handler = () => myChart.resize() // 监听窗口大小变化
+    window.addEventListener('resize', handler) // 添加监听事件
+    resizeHandlers.value.set(String(chart.id), handler) // 保存监听事件
   })
 
   // 渲染失败
@@ -294,26 +320,28 @@ const pollCallback = async (): Promise<boolean> => {
   if (pendingCharts.length === 0) {
     return true // 停止轮询
   }
-  // 逐个查询状态
-  for (const chart of pendingCharts) {
-    if (!chart.id) continue
-    try {
-      const res = await getChartStatus({ id: chart.id })
-      if (res.data) {
-        chart.status = res.data.status
-        chart.genChart = res.data.genChart
-        chart.genResult = res.data.genResult
-        chart.execMessage = res.data.execMessage
-        // 如果有新结果，重新渲染图表
-        if (res.data.status === 'succeed' && res.data.genChart) {
-          await nextTick()
-          renderChart(chart)
-        }
-      }
-    } catch {
-      // 静默处理
+  // 并行查询所有待处理图表状态（避免串行 await 叠加 RTT）
+  const results = await Promise.allSettled(
+    pendingCharts.map((chart) => (chart.id ? getChartStatus({ id: chart.id }) : Promise.reject())),
+  )
+  // 先批量回写状态，等 Vue DOM 更新后再交给懒加载
+  const succeedCharts: API.ChartVO[] = []
+  results.forEach((result, i) => {
+    if (result.status !== 'fulfilled' || !result.value.data) return // 忽略错误
+    const chart = pendingCharts[i]
+    if (!chart) return
+    const data = result.value.data
+    chart.status = data.status
+    chart.genChart = data.genChart
+    chart.genResult = data.genResult
+    chart.execMessage = data.execMessage
+    if (data.status === 'succeed' && data.genChart) {
+      succeedCharts.push(chart)
     }
-  }
+  })
+  // 等 Vue 把 succeed 卡片的 chart-canvas div 渲染到 DOM 后再观察
+  await nextTick()
+  succeedCharts.forEach((chart) => observeChart(chart))
   return false // 继续轮询
 }
 
@@ -337,6 +365,7 @@ const loadChartList = async () => {
       sortField: searchForm.sortField,
       sortOrder: searchForm.sortOrder,
     }
+    // 获取图表列表
     const res = await listMyChartVoByPage(query)
     if (res.data?.records) {
       tableData.value = res.data.records
@@ -685,6 +714,33 @@ onUnmounted(() => {
   justify-content: flex-end;
   padding: 20px;
   border-top: 1px solid #f4f4f5;
+}
+
+.error-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e4e4e7;
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #18181b;
+    margin: 0;
+  }
+
+  .error-message {
+    font-size: 13px;
+    color: #71717a;
+    max-width: 400px;
+    text-align: center;
+    word-break: break-all;
+  }
 }
 
 @media (max-width: 768px) {

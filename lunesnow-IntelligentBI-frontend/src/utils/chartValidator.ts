@@ -35,7 +35,7 @@ export function safeParseChartConfig(raw: string | null | undefined): any | null
     return null
   }
 
-  // 1. 去除空白字符
+  // 1. 去除空白字
   const trimmed = raw.trim()
   if (!trimmed) {
     return null
@@ -61,10 +61,20 @@ export function safeParseChartConfig(raw: string | null | undefined): any | null
     // 继续尝试
   }
 
-  // 第三次尝试：new Function（JavaScript 对象格式）
+  // 第三次尝试：宽松解析 JS 对象字面量（正则转换，不执行代码）
   try {
-    // 只允许返回对象字面量，不执行其他代码
-    const result = new Function('return ' + trimmed)()
+    // 将 JS 对象语法转换为合法 JSON：去尾逗号、键名加引号、单引号→双引号
+    // 去除 option = 前缀和末尾分号
+    const jsLike = trimmed
+      .replace(/^(?:let|var|const)?\s*option\s*=\s*/, '')
+      .replace(/;$/, '')
+      .trim()
+    const jsonLike = jsLike
+      .replace(/,\s*([}\]])/g, '$1')           // 去除尾逗号
+      .replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":') // 给无引号的键名加双引号
+      .replace(/'/g, '"')                       // 单引号字符串→双引号
+      .trim()
+    const result = JSON.parse(jsonLike)
     if (typeof result === 'object' && result !== null) {
       return filterDangerousFields(result)
     }
@@ -78,6 +88,11 @@ export function safeParseChartConfig(raw: string | null | undefined): any | null
  * 过滤危险字段
  */
 function filterDangerousFields(obj: any): any {
+  // 过滤函数类型的值（防止恶意代码执行）
+  if (typeof obj === 'function') {
+    return undefined
+  }
+
   if (typeof obj !== 'object' || obj === null) {
     return obj
   }
@@ -91,7 +106,11 @@ function filterDangerousFields(obj: any): any {
   const cleaned: any = {}
   for (const key of Object.keys(obj)) {
     if (!DANGEROUS_FIELDS.includes(key)) {
-      cleaned[key] = filterDangerousFields(obj[key])
+      const value = filterDangerousFields(obj[key])
+      // 递归过滤后值为 undefined 的跳过（如函数类型被过滤后）
+      if (value !== undefined) {
+        cleaned[key] = value
+      }
     }
   }
   return cleaned
@@ -115,7 +134,12 @@ export function validateEChartsOption(option: any): ValidationResult {
     return { valid: false, error: '缺少必要的数据配置（series/data/dataset）' }
   }
 
-  // 3. series 必须是数组（如果存在）
+  // 3. data 字段类型检查（如果存在）
+  if (option.data !== undefined && !Array.isArray(option.data)) {
+    return { valid: false, error: 'data 配置格式错误，应为数组' }
+  }
+
+  // 4. series 必须是数组（如果存在）
   if (option.series !== undefined) {
     if (!Array.isArray(option.series)) {
       return { valid: false, error: 'series 配置格式错误，应为数组' }
@@ -125,7 +149,7 @@ export function validateEChartsOption(option: any): ValidationResult {
     }
   }
 
-  // 4. 检查是否有类型定义
+  // 5. 检查是否有类型定义
   if (option.series && Array.isArray(option.series)) {
     const hasType = option.series.some((s: any) => s && s.type)
     if (!hasType) {

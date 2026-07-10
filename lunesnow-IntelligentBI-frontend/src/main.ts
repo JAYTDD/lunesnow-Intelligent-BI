@@ -18,4 +18,11 @@ app.use(createPinia())
 app.use(router)
 
 app.use(ElementPlus)
+
+// 全局错误兜底：防止未被 onErrorCaptured 拦截的渲染错误导致白屏
+app.config.errorHandler = (err, instance, info) => {
+  console.error('[全局错误兜底]', err, info)
+  // 可选：上报到监控系统
+}
+
 app.mount('#app')

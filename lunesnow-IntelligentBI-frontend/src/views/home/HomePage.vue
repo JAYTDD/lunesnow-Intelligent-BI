@@ -1,5 +1,16 @@
 <template>
   <div class="home-page">
+    <!-- 组件错误兜底 -->
+    <div v-if="pageError" class="error-fallback">
+      <el-icon :size="64" color="#f56c6c"><CircleCloseFilled /></el-icon>
+      <h3>页面加载出错</h3>
+      <p class="error-message">{{ pageError.message }}</p>
+      <el-button type="primary" @click="handlePageRetry">
+        <el-icon><Refresh /></el-icon> 重新加载
+      </el-button>
+    </div>
+
+    <template v-else>
     <!-- 顶部欢迎区 - 左对齐 -->
     <section class="hero">
       <div class="hero-content">
@@ -144,11 +155,12 @@
         </div>
       </div>
     </section>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, computed, onErrorCaptured } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -160,14 +172,29 @@ import {
   ArrowRight,
   Top,
   PieChart,
+  CircleCloseFilled,
+  Refresh,
 } from '@element-plus/icons-vue'
 import { getStatistics } from '@/api/chartController'
 import { useLoginUserStore } from '@/stores/useLoginUserStore'
 import { safeRenderChart } from '@/utils/chartValidator'
-import * as echarts from 'echarts'
+import * as echarts from '@/utils/echarts'
 
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
+
+const pageError = ref<Error | null>(null)
+
+onErrorCaptured((err) => {
+  console.error('首页渲染错误:', err)
+  pageError.value = err
+  return false // 阻止冒泡到 App，避免全应用白屏
+})
+
+const handlePageRetry = () => {
+  pageError.value = null
+  loadStatistics()
+}
 
 const loading = ref(true)
 const statistics = ref<API.ChartStatisticsVO>({})
@@ -786,6 +813,34 @@ $radius-xl: 24px;
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+/* ========== 错误兜底 ========== */
+.error-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+  background: $bg-card;
+  border-radius: $radius-lg;
+  border: 1px solid $border-light;
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0;
+  }
+
+  .error-message {
+    font-size: 13px;
+    color: $text-secondary;
+    max-width: 400px;
+    text-align: center;
+    word-break: break-all;
   }
 }
 
